@@ -1,0 +1,7 @@
+*
+!.gitignore
+!Makefile.am
+!configure.ac
+!grocksdb.c
+!grocksdb.h
+!README
