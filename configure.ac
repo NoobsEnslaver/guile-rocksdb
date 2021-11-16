@@ -1,10 +1,11 @@
-AC_INIT([grocksdb], [0.1], [vorontsov.nstu@yandex.ru])
+AC_INIT([guile-rocksdb], [0.1], [vorontsov.nstu@yandex.ru])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 LT_INIT
 
 PKG_CHECK_MODULES([GUILE], [guile-3.0])
+
 AC_CHECK_HEADERS([rocksdb/c.h], [],
   [AC_MSG_ERROR([*** Can't find rocksdb include files])])
 

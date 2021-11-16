@@ -1,7 +1,7 @@
 #include <libguile.h>
 #include <stdlib.h>
 #include "rocksdb/c.h"
-#include "grocksdb.h"
+#include "guile-rocksdb.h"
 
 // ------------------ Types -------------------------
 

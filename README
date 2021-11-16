@@ -1,0 +1,18 @@
+# -*- mode: org; fill-column: 120; coding: utf-8; -*-
+#+AUTHOR: Nikita Vorontsov
+#+TITLE: Work In Progress
+
+* Guile RocksDB bindings
+** Building
+   TODO
+
+#+begin_src shell
+ autoreconf -vif && ./configure && make && make install
+#+end_src
+
+#+begin_src shell
+ gcc `pkg-config --cflags guile-3.0` -shared -o libguile-rocksdb.so -fPIC guile-rocksdb.c -lrocksdb
+#+end_src
+
+** Usage
+   TODO

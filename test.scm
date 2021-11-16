@@ -1,0 +1,13 @@
+(load-extension ".libs/libgrocksdb" "init")
+
+(let ([opts (rocksdb-options-create)])
+  (rocksdb-options-increase-parallelism! opts 4)
+  (rocksdb-options-optimize-level-style-compaction! opts 0)
+  (rocksdb-options-set-create-if-missing! opts 1)
+  (let ([db (rocksdb-open opts "/tmp/rocksdb_simple_example")])
+    (display "opts: ")
+    (display opts)
+    (newline)
+    (display "db: ")
+    (display db)
+    (newline)))

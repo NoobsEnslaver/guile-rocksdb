@@ -1,7 +1,10 @@
 *
+!guix.scm
 !.gitignore
 !Makefile.am
 !configure.ac
-!grocksdb.c
-!grocksdb.h
+!guile-rocksdb.c
+!guile-rocksdb.h
 !README
+!test.scm
+!LICENSE
