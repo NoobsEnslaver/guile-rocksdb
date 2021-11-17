@@ -3,6 +3,8 @@
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
 
+#define DEF(name,arity,funref) scm_c_define_gsubr(name, arity, 0, 0, funref); scm_c_export(name, NULL)
+
 // ------------------ Types -------------------------
 
 /* static void display(char* msg){ */
@@ -301,53 +303,62 @@ static SCM grocksdb_close(SCM db){
 
 //-------------------------------------------------------------------------------------------
 
-static void init_types(){
+void init_main() {
     scm_rocksdb_t = define_type_wrapper("rocksdb", grocksdb_close);
+
+    DEF("rocksdb-open", 2, &grocksdb_open);
+    DEF("rocksdb-open-with-ttl", 3, &grocksdb_open_with_ttl);
+    DEF("rocksdb-open-for-read-only", 3, &grocksdb_open_for_read_only);
+    DEF("rocksdb-close!", 1, &grocksdb_close);
+}
+
+void init_options() {
     scm_rocksdb_options_t = define_type_wrapper("rocksdb_options", NULL);
+
+    DEF("rocksdb-options-create", 0, &grocksdb_options_create);
+    DEF("rocksdb-options-increase-parallelism!", 2, &grocksdb_options_increase_parallelism);
+    DEF("rocksdb-options-optimize-level-style-compaction!", 2, &grocksdb_options_optimize_level_style_compaction);
+    DEF("rocksdb-options-set-create-if-missing!", 2, &grocksdb_options_set_create_if_missing);
+}
+
+void init_backup() {
     scm_rocksdb_backup_engine_t = define_type_wrapper("rocksdb_backup_engine", grocksdb_backup_engine_close);
     scm_rocksdb_restore_options_t = define_type_wrapper("rocksdb_restore_options", grocksdb_restore_options_destroy);
     scm_rocksdb_backup_engine_info_t = define_type_wrapper("rocksdb_backup_engine_info", grocksdb_backup_engine_info_destroy);
 
-    scm_rocksdb_checkpoint_t = define_type_wrapper("rocksdb_checkpoint", grocksdb_checkpoint_object_destroy);
+    DEF("rocksdb-backup-engine-open", 2, &grocksdb_backup_engine_open);
+    DEF("rocksdb-backup-engine-create-new-backup", 2, &grocksdb_backup_engine_create_new_backup);
+    DEF("rocksdb-backup-engine-purge-old-backups", 2, &grocksdb_backup_engine_purge_old_backups);
+    DEF("rocksdb-restore-options-set-keep-log-files!", 2, &grocksdb_restore_options_set_keep_log_files);
+    DEF("rocksdb-backup-engine-verify-backup", 2, &grocksdb_backup_engine_verify_backup);
+    DEF("rocksdb-backup-engine-restore-db-from-latest-backup", 4, &grocksdb_backup_engine_restore_db_from_latest_backup);
+    DEF("rocksdb-backup-engine-get-backup-info", 1, &grocksdb_backup_engine_get_backup_info);
+    DEF("rocksdb-backup-engine-info-count", 1, &grocksdb_backup_engine_info_count);
+    DEF("rocksdb-backup-engine-info-timestamp", 2, &grocksdb_backup_engine_info_timestamp);
+    DEF("rocksdb-backup-engine-info-backup-id", 2, &grocksdb_backup_engine_info_backup_id);
+    DEF("rocksdb-backup-engine-info-size", 2, &grocksdb_backup_engine_info_size);
+    DEF("rocksdb-backup-engine-info-number-files", 2, &grocksdb_backup_engine_info_number_files);
+    DEF("rocksdb-backup-engine-close!", 1, &grocksdb_backup_engine_close);
 }
 
-static void register_functions (void* data) {
-    scm_c_define_gsubr("rocksdb-open", 2, 0, 0, &grocksdb_open);
-    scm_c_define_gsubr("rocksdb-open-with-ttl", 3, 0, 0, &grocksdb_open_with_ttl);
-    scm_c_define_gsubr("rocksdb-open-for-read-only", 3, 0, 0, &grocksdb_open_for_read_only);
-    scm_c_define_gsubr("rocksdb-backup-engine-open", 2, 0, 0, &grocksdb_backup_engine_open);
-    scm_c_define_gsubr("rocksdb-backup-engine-create-new-backup", 2, 0, 0, &grocksdb_backup_engine_create_new_backup);
-    scm_c_define_gsubr("rocksdb-backup-engine-purge-old-backups", 2, 0, 0, &grocksdb_backup_engine_purge_old_backups);
-    scm_c_define_gsubr("rocksdb-restore-options-set-keep-log-files!", 2, 0, 0, &grocksdb_restore_options_set_keep_log_files);
-    scm_c_define_gsubr("rocksdb-backup-engine-verify-backup", 2, 0, 0, &grocksdb_backup_engine_verify_backup);
-    scm_c_define_gsubr("rocksdb-backup-engine-restore-db-from-latest-backup", 4, 0, 0, &grocksdb_backup_engine_restore_db_from_latest_backup);
-    scm_c_define_gsubr("rocksdb-backup-engine-get-backup-info", 1, 0, 0, &grocksdb_backup_engine_get_backup_info);
-    scm_c_define_gsubr("rocksdb-backup-engine-info-count", 1, 0, 0, &grocksdb_backup_engine_info_count);
-    scm_c_define_gsubr("rocksdb-backup-engine-info-timestamp", 2, 0, 0, &grocksdb_backup_engine_info_timestamp);
-    scm_c_define_gsubr("rocksdb-backup-engine-info-backup-id", 2, 0, 0, &grocksdb_backup_engine_info_backup_id);
-    scm_c_define_gsubr("rocksdb-backup-engine-info-size", 2, 0, 0, &grocksdb_backup_engine_info_size);
-    scm_c_define_gsubr("rocksdb-backup-engine-info-number-files", 2, 0, 0, &grocksdb_backup_engine_info_number_files);
-    scm_c_define_gsubr("rocksdb-backup-engine-close!", 1, 0, 0, &grocksdb_backup_engine_close);
-    scm_c_define_gsubr("rocksdb-checkpoint-object-create", 1, 0, 0, &grocksdb_checkpoint_object_create);
-    scm_c_define_gsubr("rocksdb-checkpoint-create", 3, 0, 0, &grocksdb_checkpoint_create);
-    //scm_c_define_gsubr("", 2, 0, 0, &);
+void init_checkpoint() {
+    scm_rocksdb_checkpoint_t = define_type_wrapper("rocksdb_checkpoint", grocksdb_checkpoint_object_destroy);
 
+    DEF("rocksdb-checkpoint-create", 3, &grocksdb_checkpoint_create);
+    DEF("rocksdb-checkpoint-object-create", 1, &grocksdb_checkpoint_object_create);
+}
 
-    scm_c_define_gsubr("rocksdb-close!", 1, 0, 0, &grocksdb_close);
-
-    scm_c_define_gsubr("rocksdb-options-create", 0, 0, 0, &grocksdb_options_create);
-    scm_c_define_gsubr("rocksdb-options-increase-parallelism!", 2, 0, 0, &grocksdb_options_increase_parallelism);
-    scm_c_define_gsubr("rocksdb-options-optimize-level-style-compaction!", 2, 0, 0, &grocksdb_options_optimize_level_style_compaction);
-    scm_c_define_gsubr("rocksdb-options-set-create-if-missing!", 2, 0, 0, &grocksdb_options_set_create_if_missing);
-
-
-    return NULL;
+void init_modules() {
+    /* TODO: export types */
+    scm_c_define_module("rocksdb", init_main, NULL);
+    scm_c_define_module("rocksdb backup", init_backup, NULL);
+    scm_c_define_module("rocksdb options", init_options, NULL);
+    scm_c_define_module("rocksdb checkpoint", init_checkpoint, NULL);
 }
 
 /* INIT */
 void init() {
-    scm_with_guile(&register_functions, NULL);
-    init_types();
+    scm_with_guile(&init_modules, NULL);
 
     /* display_func = scm_variable_ref(scm_c_lookup("display")); //debug */
 

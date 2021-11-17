@@ -1,4 +1,6 @@
-(load-extension ".libs/libgrocksdb" "init")
+(load-extension "./libguile-rocksdb" "init")
+(use-modules (rocksdb)
+             (rocksdb options))
 
 (let ([opts (rocksdb-options-create)])
   (rocksdb-options-increase-parallelism! opts 4)
