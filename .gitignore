@@ -5,5 +5,5 @@
 !configure.ac
 !c_src/
 !README
-!test.scm
+!tests/
 !LICENSE

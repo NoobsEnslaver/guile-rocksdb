@@ -13,4 +13,4 @@ AC_SEARCH_LIBS(rocksdb_open, [rocksdb], [],
   [AC_MSG_ERROR([*** Can't find rocksdb.so file])])
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile c_src/Makefile])
