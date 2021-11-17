@@ -3,8 +3,7 @@
 !.gitignore
 !Makefile.am
 !configure.ac
-!guile-rocksdb.c
-!guile-rocksdb.h
+!c_src/
 !README
 !test.scm
 !LICENSE
