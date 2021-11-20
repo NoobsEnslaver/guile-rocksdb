@@ -1,11 +1,5 @@
 lib_LTLIBRARIES = libguile-rocksdb.la
-libguile_rocksdb_la_SOURCES = guile-rocksdb.c \
-                              guile-rocksdb.h \
-                              guile-rocksdb-backup.h \
-                              guile-rocksdb-checkpoint.h \
-                              guile-rocksdb-main.h \
-                              guile-rocksdb-writeopions.h \
-                              guile-rocksdb-options.h
+libguile_rocksdb_la_SOURCES = guile-rocksdb.c guile-rocksdb-options-utils.cc
 libguile_rocksdb_la_CFLAGS = ${GUILE_CFLAGS}
+libguile_rocksdb_la_CXXFLAGS = ${GUILE_CFLAGS}
 libguile_rocksdb_la_LIBADD = ${GUILE_LIBS} ${LIBS}
-ACLOCAL_AMFLAGS = -I m4

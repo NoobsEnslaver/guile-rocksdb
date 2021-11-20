@@ -1,1 +1,2 @@
 SUBDIRS = c_src
+ACLOCAL_AMFLAGS = -I m4

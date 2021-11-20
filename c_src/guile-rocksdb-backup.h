@@ -52,7 +52,6 @@ static SCM grocksdb_restore_options_create(){
 }
 
 static void grocksdb_restore_options_destroy(SCM opt){
-    scm_assert_foreign_object_type(scm_rocksdb_restore_options_t, opt);
     rocksdb_restore_options_destroy(scm_foreign_object_ref(opt, 0));
 }
 

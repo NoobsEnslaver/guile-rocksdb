@@ -10,13 +10,16 @@ SCM scm_rocksdb_restore_options_t;
 SCM scm_rocksdb_backup_engine_info_t;
 SCM scm_rocksdb_checkpoint_t;
 SCM scm_rocksdb_writeoptions_t;
+SCM scm_rocksdb_readoptions_t;
+SCM scm_rocksdb_column_family_handle_t;
+SCM scm_rocksdb_writebatch_t;
+SCM scm_rocksdb_env_t;
+SCM scm_rocksdb_cache_t;
 
 // ------------------- Define types -------------------
 
-SCM display_func;//debug
-
-static void display(char* msg){
-    scm_call_1(scm_variable_ref(display_func), scm_from_utf8_string(msg));
+void display(const char* msg){
+    scm_display(scm_from_utf8_string(msg), scm_current_output_port());
 }
 
 static SCM define_type_wrapper(char* name_c, void* finalizer){

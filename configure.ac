@@ -2,6 +2,8 @@ AC_INIT([guile-rocksdb], [0.1], [vorontsov.nstu@yandex.ru])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
 LT_INIT
 
 PKG_CHECK_MODULES([GUILE], [guile-3.0])
