@@ -1,6 +1,6 @@
 // --------------- Wrapers -------------------------
 static SCM grocksdb_checkpoint_object_create(SCM db){
-    scm_assert_foreign_object_type(scm_rocksdb_t, db);
+    ASSERT_DB(db);
 
     char *err = NULL;
     rocksdb_t* db_ref = scm_foreign_object_ref(db, 0);

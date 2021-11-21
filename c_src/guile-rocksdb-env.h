@@ -13,7 +13,7 @@ static void grocksdb_env_destroy(SCM env){
 
 // --------------- Init ----------------------------
 static void init_env() {
-    scm_rocksdb_env_t = define_type_wrapper("rocksdb-env", NULL /* grocksdb_env_destroy */);
+    scm_rocksdb_env_t = define_type_wrapper("rocksdb-env", grocksdb_env_destroy);
 
     DEF("rocksdb-create-default-env", 0, &grocksdb_create_default_env);
     DEF("rocksdb-create-mem-env", 0, &grocksdb_create_mem_env);

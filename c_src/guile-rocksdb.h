@@ -1,5 +1,7 @@
 #define DEF(name,arity,funref) scm_c_define_gsubr(name, arity, 0, 0, funref); scm_c_export(name, NULL)
 #define DEFOPT(name,arity,opt,funref) scm_c_define_gsubr(name, arity, opt, 0, funref); scm_c_export(name, NULL)
+#define ASSERT_DB(db) scm_assert_foreign_object_type(scm_rocksdb_t, db); \
+    if(scm_foreign_object_ref(db, 1)) scm_misc_error(NULL, "db handler already closed", SCM_EOL)
 
 // ------------------- Types -------------------------
 
@@ -23,8 +25,16 @@ void display(const char* msg){
 }
 
 static SCM define_type_wrapper(char* name_c, void* finalizer){
-        SCM name = scm_from_utf8_symbol(name_c);
-        SCM slots = scm_list_1(scm_from_utf8_symbol("ref"));
+    SCM name = scm_from_utf8_symbol(name_c);
+    SCM slots = scm_list_1(scm_from_utf8_symbol("ref"));
 
-        return scm_make_foreign_object_type(name, slots, (scm_t_struct_finalize)finalizer);
+    return scm_make_foreign_object_type(name, slots, (scm_t_struct_finalize)finalizer);
+}
+
+static SCM define_type_wrapper_2(char* name_c, char* extra_slot_c, void* finalizer){
+    SCM name = scm_from_utf8_symbol(name_c);
+    SCM slots = scm_list_2(scm_from_utf8_symbol("ref"),
+                           scm_from_utf8_symbol(extra_slot_c));
+
+    return scm_make_foreign_object_type(name, slots, (scm_t_struct_finalize)finalizer);
 }

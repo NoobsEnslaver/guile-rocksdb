@@ -7,7 +7,7 @@ static SCM grocksdb_open(SCM options, SCM db_path){
     rocksdb_t *db = rocksdb_open(scm_foreign_object_ref(options, 0),
                                  scm_to_utf8_string(db_path), &err);
     if(err != NULL) scm_syserror(err);
-    return scm_make_foreign_object_1(scm_rocksdb_t, db);
+    return scm_make_foreign_object_2(scm_rocksdb_t, db, false);
 }
 
 static SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
@@ -20,7 +20,7 @@ static SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
                                           scm_to_utf8_string(db_path),
                                           scm_to_size_t(ttl), &err);
     if(err != NULL) scm_syserror(err);
-    return scm_make_foreign_object_1(scm_rocksdb_t, db);
+    return scm_make_foreign_object_2(scm_rocksdb_t, db, false);
 }
 
 static SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_log_file_exist){
@@ -32,21 +32,26 @@ static SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_lo
     rocksdb_t *db = rocksdb_open_for_read_only(scm_foreign_object_ref(options, 0),
                                                scm_to_utf8_string(db_path), flag, &err);
     if(err != NULL) scm_syserror(err);
-    return scm_make_foreign_object_1(scm_rocksdb_t, db);
+    return scm_make_foreign_object_2(scm_rocksdb_t, db, false);
 }
 
 static SCM grocksdb_close(SCM db){
     scm_assert_foreign_object_type(scm_rocksdb_t, db);
-    rocksdb_close(scm_foreign_object_ref(db, 0));
+    if (!scm_foreign_object_ref(db, 1)){ //check 'already-closed?' flag
+        scm_foreign_object_set_x(db, 1, (void *)true);
+        rocksdb_close(scm_foreign_object_ref(db, 0));
+    };
+
     return SCM_UNSPECIFIED;
 }
 
+//TODO: provide unsafe, but fast version, without types validation
 static SCM grocksdb_put(SCM scm_db, SCM scm_key, SCM scm_val, SCM scm_writeopt){
     char *err = NULL;
+    ASSERT_DB(scm_db);
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-put", "bytevector");
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_val), scm_val, SCM_ARG3, "rocksdb-put", "bytevector");
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
 
     rocksdb_put(scm_foreign_object_ref(scm_db, 0),
@@ -60,12 +65,13 @@ static SCM grocksdb_put(SCM scm_db, SCM scm_key, SCM scm_val, SCM scm_writeopt){
     return SCM_UNSPECIFIED;
 }
 
+//TODO: provide unsafe, but fast version, without types validation
 static SCM grocksdb_put_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_val, SCM scm_writeopt){
     char *err = NULL;
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG3, "rocksdb_put_cf", "bytevector");
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_val), scm_val, SCM_ARG4, "rocksdb_put_cf", "bytevector");
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
 
@@ -86,7 +92,7 @@ static void grocksdb_column_family_handle_destroy(SCM cf){
 }
 
 static SCM grocksdb_create_column_family(SCM scm_db, SCM scm_options, SCM scm_cf_name){
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
     SCM_ASSERT_TYPE(scm_string_p(scm_cf_name), scm_cf_name, SCM_ARG3, "rocksdb-create-column-family", "string");
 
@@ -99,7 +105,7 @@ static SCM grocksdb_create_column_family(SCM scm_db, SCM scm_options, SCM scm_cf
 }
 
 static SCM grocksdb_delete(SCM scm_db, SCM scm_key, SCM scm_writeopt){
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-delete", "bytevector");
@@ -114,7 +120,7 @@ static SCM grocksdb_delete(SCM scm_db, SCM scm_key, SCM scm_writeopt){
 }
 
 static SCM grocksdb_delete_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_writeopt){
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
@@ -131,7 +137,7 @@ static SCM grocksdb_delete_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_write
 }
 
 static SCM grocksdb_delete_range_cf(SCM scm_db, SCM scm_cf, SCM scm_start_key, SCM scm_end_key, SCM scm_writeopt){
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
@@ -153,7 +159,7 @@ static SCM grocksdb_delete_range_cf(SCM scm_db, SCM scm_cf, SCM scm_start_key, S
 }
 
 static SCM grocksdb_write(SCM scm_db, SCM scm_writebatch, SCM scm_writeopt){
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    ASSERT_DB(scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_writebatch_t, scm_writebatch);
     scm_writeopt = (SCM_UNBNDP(scm_writeopt)) ? grocksdb_writeoptions_create() : scm_writeopt;
     scm_assert_foreign_object_type(scm_rocksdb_writeoptions_t, scm_writeopt);
@@ -167,9 +173,9 @@ static SCM grocksdb_write(SCM scm_db, SCM scm_writebatch, SCM scm_writeopt){
 }
 
 static SCM grocksdb_get(SCM scm_db, SCM scm_key, SCM scm_readopt){
+    ASSERT_DB(scm_db);
     scm_readopt = (SCM_UNBNDP(scm_readopt)) ? grocksdb_readoptions_create() : scm_readopt;
     SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-get", "bytevector");
-    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_readoptions_t, scm_readopt);
 
     size_t vallen;
@@ -191,7 +197,7 @@ extern ROCKSDB_LIBRARY_API char* rocksdb_get(
 
 // --------------- Init ----------------------------
 static void init_main() {
-    scm_rocksdb_t = define_type_wrapper("rocksdb", grocksdb_close);
+    scm_rocksdb_t = define_type_wrapper_2("rocksdb", "already-closed?", grocksdb_close);
     scm_rocksdb_column_family_handle_t =
         define_type_wrapper("rocksdb-column-family-handle", grocksdb_column_family_handle_destroy);
 

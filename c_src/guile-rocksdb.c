@@ -1,4 +1,5 @@
 #include <libguile.h>
+#include <stdbool.h>
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
 #include "guile-rocksdb-options.h"

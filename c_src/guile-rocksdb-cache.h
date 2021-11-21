@@ -10,7 +10,7 @@ static void grocksdb_cache_destroy(SCM cache){
 
 // --------------- Init ----------------------------
 static void init_cache() {
-    scm_rocksdb_cache_t = define_type_wrapper("rocksdb-cache", NULL /* grocksdb_cache_destroy */);
+    scm_rocksdb_cache_t = define_type_wrapper("rocksdb-cache", grocksdb_cache_destroy);
 
     DEF("rocksdb-cache-create-lru", 1, &grocksdb_cache_create_lru);
 }

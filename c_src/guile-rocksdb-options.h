@@ -32,18 +32,20 @@ static SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_mis
 }
 
 // see guile-rocksdb-options-utils.cc
-extern SCM gload_options_from_file(SCM scm_options_file_name,
-                  /* optional: */  SCM scm_ignore_unknown_options, SCM scm_cache, SCM scm_env);
+extern SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache);
+extern SCM gget_latest_options_filename(SCM scm_dbpath, SCM scm_env);
 
 // --------------- Init ----------------------------
 static void init_options() {
-    scm_rocksdb_options_t = define_type_wrapper("rocksdb_options", NULL /* grocksdb_options_destroy */);
+    scm_rocksdb_options_t = define_type_wrapper("rocksdb_options", grocksdb_options_destroy);
 
     DEF("rocksdb-options-create", 0, &grocksdb_options_create);
     DEF("rocksdb-options-increase-parallelism!", 2, &grocksdb_options_increase_parallelism);
     DEF("rocksdb-options-optimize-level-style-compaction!", 2, &grocksdb_options_optimize_level_style_compaction);
     DEF("rocksdb-options-set-create-if-missing!", 2, &grocksdb_options_set_create_if_missing);
-    DEFOPT("load-options-from-file", 1, 3, &gload_options_from_file);
+    DEFOPT("load-options-from-file", 1, 1, &gload_options_from_file);
+    DEFOPT("get-latest-options-filename", 1, 1, &gget_latest_options_filename);
+
 }
 
 //----------------- TODO ---------------------------

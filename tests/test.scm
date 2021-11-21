@@ -7,8 +7,10 @@
              (rocksdb writeoptions)
              (rocksdb readoptions)
              (rnrs bytevectors)
+             (srfi srfi-1)
              (srfi srfi-64)
-             (ice-9 receive))
+             (ice-9 receive)
+             (oop goops))
 
 (define cleanup-strategy 'purge)    ;keep-logs | purge | none
 
@@ -45,7 +47,8 @@
       (chdir test-dir)
       (test-begin "rocksdb-guile"))
     (lambda ()
-      (include "test-main.scm"))
+      (include "test-main.scm")
+      (include "test-options.scm"))
     (lambda ()
       (test-end)
       (chdir top-dir)

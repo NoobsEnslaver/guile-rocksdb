@@ -13,8 +13,8 @@ static SCM grocksdb_backup_engine_open(SCM options, SCM path){
 }
 
 static SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
-    scm_assert_foreign_object_type(scm_rocksdb_t, db);
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
+    ASSERT_DB(db);
 
     char *err = NULL;
     rocksdb_backup_engine_create_new_backup(scm_foreign_object_ref(bk, 0),
@@ -25,7 +25,7 @@ static SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
 
 static SCM grocksdb_backup_engine_create_new_backup_flush(SCM bk, SCM db, SCM flush_before_backup){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    scm_assert_foreign_object_type(scm_rocksdb_t, db);
+    ASSERT_DB(db);
 
     char *err = NULL;
     unsigned char flag = scm_is_false(flush_before_backup)? 0 : 1;
