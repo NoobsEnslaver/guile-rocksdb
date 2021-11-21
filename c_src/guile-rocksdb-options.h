@@ -34,6 +34,7 @@ static SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_mis
 // see guile-rocksdb-options-utils.cc
 extern SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache);
 extern SCM gget_latest_options_filename(SCM scm_dbpath, SCM scm_env);
+extern SCM gload_latest_options(SCM scm_dbpath, SCM scm_cache);
 
 // --------------- Init ----------------------------
 static void init_options() {
@@ -45,7 +46,7 @@ static void init_options() {
     DEF("rocksdb-options-set-create-if-missing!", 2, &grocksdb_options_set_create_if_missing);
     DEFOPT("load-options-from-file", 1, 1, &gload_options_from_file);
     DEFOPT("get-latest-options-filename", 1, 1, &gget_latest_options_filename);
-
+    DEFOPT("load-latest-options", 1, 1, &gload_latest_options);
 }
 
 //----------------- TODO ---------------------------
