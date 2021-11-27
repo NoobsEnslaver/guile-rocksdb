@@ -2,8 +2,6 @@
  (let ([opts (rocksdb-options-create)]
        [wopts (rocksdb-writeoptions-create)]
        [ropts (rocksdb-readoptions-create)])
-   (rocksdb-options-increase-parallelism! opts 4)
-   (rocksdb-options-optimize-level-style-compaction! opts 0)
    (rocksdb-options-set-create-if-missing! opts 1)
    (let ([db (rocksdb-open opts (make-tmp-dir))])
      (rocksdb-put db #u8(1) #u8(2))

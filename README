@@ -7,11 +7,7 @@
    TODO
 
 #+begin_src shell
- autoreconf -vif && ./configure && make && make install
-#+end_src
-
-#+begin_src shell
- gcc `pkg-config --cflags guile-3.0` -shared -o libguile-rocksdb.so -fPIC guile-rocksdb.c -lrocksdb
+ ./bootstrap && autoreconf -vif && ./configure && make && make install
 #+end_src
 
 ** Usage

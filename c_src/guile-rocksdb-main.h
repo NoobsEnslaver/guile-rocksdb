@@ -1,17 +1,18 @@
 // --------------- Wrapers -------------------------
 static SCM grocksdb_open(SCM options, SCM db_path){
-    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
+    ASSERT_CONSUME_OPTIONS(options);
     SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb_open", "string");
 
     char *err = NULL;
     rocksdb_t *db = rocksdb_open(scm_foreign_object_ref(options, 0),
                                  scm_to_utf8_string(db_path), &err);
     if(err != NULL) scm_syserror(err);
+
     return scm_make_foreign_object_2(scm_rocksdb_t, db, false);
 }
 
 static SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
-    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
+    ASSERT_CONSUME_OPTIONS(options);
     SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb_open_with_ttl", "string");
     SCM_ASSERT_TYPE(scm_integer_p(ttl), ttl, SCM_ARG3, "rocksdb_open_with_ttl", "integer");
 
@@ -24,7 +25,7 @@ static SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
 }
 
 static SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_log_file_exist){
-    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
+    ASSERT_CONSUME_OPTIONS(options);
     SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb-open-for-read-only", "string");
 
     unsigned char flag = scm_is_true(error_if_log_file_exist)? 1 : 0;
@@ -37,10 +38,10 @@ static SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_lo
 
 static SCM grocksdb_close(SCM db){
     scm_assert_foreign_object_type(scm_rocksdb_t, db);
-    if (!scm_foreign_object_ref(db, 1)){ //check 'already-closed?' flag
-        scm_foreign_object_set_x(db, 1, (void *)true);
-        rocksdb_close(scm_foreign_object_ref(db, 0));
-    };
+    rocksdb_t *ref = scm_foreign_object_ref(db, 0);
+    bool closed = scm_foreign_object_ref(db, 1);
+    if(!closed) scm_foreign_object_set_x(db, 1, (void *)true);
+    if(ref && !closed) rocksdb_close(ref);
 
     return SCM_UNSPECIFIED;
 }
@@ -93,7 +94,7 @@ static void grocksdb_column_family_handle_destroy(SCM cf){
 
 static SCM grocksdb_create_column_family(SCM scm_db, SCM scm_options, SCM scm_cf_name){
     ASSERT_DB(scm_db);
-    scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
+    ASSERT_CONSUME_OPTIONS(scm_options);
     SCM_ASSERT_TYPE(scm_string_p(scm_cf_name), scm_cf_name, SCM_ARG3, "rocksdb-create-column-family", "string");
 
     char *err = NULL;
@@ -191,10 +192,6 @@ static SCM grocksdb_get(SCM scm_db, SCM scm_key, SCM scm_readopt){
     return ret == NULL? SCM_BOOL_F : scm_take_u8vector((uint8_t *) ret, vallen);
 }
 
-extern ROCKSDB_LIBRARY_API char* rocksdb_get(
-    rocksdb_t* db, const rocksdb_readoptions_t* options, const char* key,
-    size_t keylen, size_t* vallen, char** errptr);
-
 // --------------- Init ----------------------------
 static void init_main() {
     scm_rocksdb_t = define_type_wrapper_2("rocksdb", "already-closed?", grocksdb_close);
@@ -213,5 +210,4 @@ static void init_main() {
     DEFOPT("rocksdb-delete-range-cf", 4, 1, &grocksdb_delete_range_cf);
     DEFOPT("rocksdb-write", 2, 1, &grocksdb_write);
     DEFOPT("rocksdb-get", 2, 1, &grocksdb_get);
-
 }

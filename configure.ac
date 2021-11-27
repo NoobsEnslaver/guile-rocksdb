@@ -1,5 +1,6 @@
 AC_INIT([guile-rocksdb], [0.1], [vorontsov.nstu@yandex.ru])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([build-aux/m4])
 AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 AC_PROG_CXX

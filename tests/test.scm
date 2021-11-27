@@ -6,6 +6,7 @@
              (rocksdb env)
              (rocksdb writeoptions)
              (rocksdb readoptions)
+             (rocksdb iterator)
              (rnrs bytevectors)
              (srfi srfi-1)
              (srfi srfi-64)
@@ -40,6 +41,12 @@
    (else
     (error "rm-rf: can't delete " tree))))
 
+(define (with-db fun)
+  (let ([dbopts (rocksdb-options-create)])
+    (rocksdb-options-set-create-if-missing! dbopts 1)
+    (fun (rocksdb-open dbopts (make-tmp-dir)))))
+
+(set! test-log-to-file "guile-rocksdb.log")
 (let ([top-dir (getcwd)]
       [test-dir (make-tmp-dir)])
   (dynamic-wind
@@ -48,7 +55,8 @@
       (test-begin "rocksdb-guile"))
     (lambda ()
       (include "test-main.scm")
-      (include "test-options.scm"))
+      (include "test-options.scm")
+      (include "test-iterator.scm"))
     (lambda ()
       (test-end)
       (chdir top-dir)
@@ -56,7 +64,8 @@
         ((purge)
          (rm-rf test-dir))
         ((keep-logs)
-         (rename-file (string-append "./" test-dir "/rocksdb-guile.log") "./rocksdb-guile.log")
+         (rename-file (string-append "./" test-dir "/" test-log-to-file)
+                      (string-append "./" test-log-to-file))
          (rm-rf test-dir)))
       )))
 

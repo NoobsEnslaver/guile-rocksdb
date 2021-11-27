@@ -1,5 +1,7 @@
 #include <libguile.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <string.h>
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
 #include "guile-rocksdb-options.h"
@@ -11,6 +13,7 @@
 #include "guile-rocksdb-checkpoint.h"
 #include "guile-rocksdb-cache.h"
 #include "guile-rocksdb-env.h"
+#include "guile-rocksdb-iterator.h"
 
 void* init_modules() {
     scm_c_define_module("rocksdb", init_main, NULL);
@@ -22,6 +25,7 @@ void* init_modules() {
     scm_c_define_module("rocksdb writebatch", init_writebatch, NULL);
     scm_c_define_module("rocksdb env", init_env, NULL);
     scm_c_define_module("rocksdb cache", init_cache, NULL);
+    scm_c_define_module("rocksdb iterator", init_iterator, NULL);
 }
 
 void init() {

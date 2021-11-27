@@ -5,7 +5,8 @@ static SCM grocksdb_cache_create_lru(SCM capacity){
 };
 
 static void grocksdb_cache_destroy(SCM cache){
-    rocksdb_cache_destroy(scm_foreign_object_ref(cache, 0));
+    rocksdb_cache_t *ref = scm_foreign_object_ref(cache, 0);
+    if(ref) rocksdb_cache_destroy(ref);
 };
 
 // --------------- Init ----------------------------
