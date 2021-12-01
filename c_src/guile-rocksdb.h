@@ -1,6 +1,7 @@
 // --------------- Helpers -------------------------
 #define DEF(name,arity,funref) scm_c_define_gsubr(name, arity, 0, 0, funref); scm_c_export(name, NULL)
 #define DEFOPT(name,arity,opt,funref) scm_c_define_gsubr(name, arity, opt, 0, funref); scm_c_export(name, NULL)
+#define DEFREST(name,funref) scm_c_define_gsubr(name, 0, 0, 1, funref); scm_c_export(name, NULL)
 #define ASSERT_CONSUME(type, obj) scm_assert_foreign_object_type(type, obj); \
     if(scm_foreign_object_ref(obj, 1)) scm_misc_error(NULL, "using object after it's consumed", SCM_EOL); \
     scm_foreign_object_set_x(obj, 1, (void *)true)

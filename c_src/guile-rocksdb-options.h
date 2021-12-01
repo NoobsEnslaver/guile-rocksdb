@@ -1,6 +1,81 @@
+static SCM k_rocksdb_options_create_if_missing;
+static SCM k_rocksdb_options_info_log_level;
+static SCM k_rocksdb_options_write_buffer_size;
+static SCM k_rocksdb_options_num_levels;
+static SCM k_rocksdb_options_max_bytes_for_level_base;
+static SCM k_rocksdb_options_max_bytes_for_level_multiplier;
+static SCM k_rocksdb_options_level_compaction_dynamic_level_bytes;
+static SCM k_rocksdb_options_max_subcompactions;
+static SCM k_rocksdb_options_max_background_jobs;
+
 // --------------- Wrapers -------------------------
-SCM grocksdb_options_create(){
-    return scm_make_foreign_object_2(scm_rocksdb_options_t, rocksdb_options_create(), false);
+SCM grocksdb_options_create(SCM rest){
+    SCM create_if_missing = SCM_UNDEFINED;
+    SCM info_log_level = SCM_UNDEFINED;
+    SCM write_buffer_size = SCM_UNDEFINED;
+    SCM num_levels = SCM_UNDEFINED;
+    SCM max_bytes_for_level_base = SCM_UNDEFINED;
+    SCM max_bytes_for_level_multiplier = SCM_UNDEFINED;
+    SCM level_compaction_dynamic_level_bytes = SCM_UNDEFINED;
+    SCM max_subcompactions = SCM_UNDEFINED;
+    SCM max_background_jobs = SCM_UNDEFINED;
+    rocksdb_options_t *opts = rocksdb_options_create();
+
+    scm_c_bind_keyword_arguments("rocksdb-options-create", rest, 0,
+                                 k_rocksdb_options_create_if_missing, &create_if_missing,
+                                 k_rocksdb_options_info_log_level, &info_log_level,
+                                 k_rocksdb_options_write_buffer_size, &write_buffer_size,
+                                 k_rocksdb_options_num_levels, &num_levels,
+                                 k_rocksdb_options_max_bytes_for_level_base, &max_bytes_for_level_base,
+                                 k_rocksdb_options_level_compaction_dynamic_level_bytes, &level_compaction_dynamic_level_bytes,
+                                 k_rocksdb_options_max_subcompactions, &max_subcompactions,
+                                 k_rocksdb_options_max_background_jobs, &max_background_jobs,
+                                 k_rocksdb_options_max_bytes_for_level_multiplier, &max_bytes_for_level_multiplier,
+                                 SCM_UNDEFINED);
+
+    if (!SCM_UNBNDP(create_if_missing))
+        rocksdb_options_set_create_if_missing(opts, scm_is_true(create_if_missing));
+
+    if (!SCM_UNBNDP(info_log_level)){
+        SCM_ASSERT_TYPE(scm_integer_p(info_log_level), info_log_level, SCM_ARG1,
+                        "rocksdb-options-create:info-log-level", "integer");
+        rocksdb_options_set_info_log_level(opts, scm_to_size_t(info_log_level));}
+
+    if (!SCM_UNBNDP(write_buffer_size)){
+        SCM_ASSERT_TYPE(scm_integer_p(write_buffer_size), write_buffer_size, SCM_ARG1,
+                        "rocksdb-options-create:write-buffer-size", "integer");
+        rocksdb_options_set_write_buffer_size(opts, scm_to_size_t(write_buffer_size));}
+
+    if (!SCM_UNBNDP(num_levels)){
+        SCM_ASSERT_TYPE(scm_integer_p(num_levels), num_levels, SCM_ARG1,
+                        "rocksdb-options-create:num-levels", "integer");
+        rocksdb_options_set_num_levels(opts, scm_to_size_t(num_levels));}
+
+    if (!SCM_UNBNDP(max_bytes_for_level_base)){
+        SCM_ASSERT_TYPE(scm_integer_p(max_bytes_for_level_base), max_bytes_for_level_base, SCM_ARG1,
+                        "rocksdb-options-create:max-bytes-for-level-base", "integer");
+        rocksdb_options_set_max_bytes_for_level_base(opts, scm_to_size_t(max_bytes_for_level_base));}
+
+    if (!SCM_UNBNDP(max_bytes_for_level_multiplier)){
+        SCM_ASSERT_TYPE(scm_real_p(max_bytes_for_level_multiplier), max_bytes_for_level_multiplier, SCM_ARG1,
+                        "rocksdb-options-create:max-bytes-for-level-multiplier", "real");
+        rocksdb_options_set_max_bytes_for_level_multiplier(opts, scm_to_double(max_bytes_for_level_multiplier));}
+
+    if (!SCM_UNBNDP(level_compaction_dynamic_level_bytes))
+        rocksdb_options_set_level_compaction_dynamic_level_bytes
+            (opts, scm_is_true(level_compaction_dynamic_level_bytes));
+
+    if (!SCM_UNBNDP(max_subcompactions)){
+        SCM_ASSERT_TYPE(scm_integer_p(max_subcompactions), max_subcompactions, SCM_ARG1,
+                        "rocksdb-options-create:max-subcompactions", "integer");
+        rocksdb_options_set_max_subcompactions(opts, scm_to_size_t(max_subcompactions));}
+
+    if (!SCM_UNBNDP(max_background_jobs)){
+        SCM_ASSERT_TYPE(scm_integer_p(max_background_jobs), max_background_jobs, SCM_ARG1,
+                        "rocksdb-options-create:max_background-jobs", "integer");
+        rocksdb_options_set_max_background_jobs(opts, scm_to_size_t(max_background_jobs));}
+
+    return scm_make_foreign_object_2(scm_rocksdb_options_t, opts, false);
 }
 
 void grocksdb_options_destroy(SCM options){
@@ -44,6 +119,10 @@ SCM grocksdb_set_options(SCM scm_db, SCM scm_options_alist){
     return SCM_UNSPECIFIED;
 }
 
+SCM grocksdb_options_p(SCM opts){
+    return scm_from_bool(SCM_IS_A_P(opts, scm_rocksdb_options_t));
+}
+
 // see guile-rocksdb-options-utils.cc
 extern SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache);
 extern SCM gget_latest_options_filename(SCM scm_dbpath, SCM scm_env);
@@ -61,9 +140,19 @@ SCM grocksdb_options_get_info_log_level(SCM scm_options){
 
 // --------------- Init ----------------------------
 void init_options() {
+    k_rocksdb_options_create_if_missing = scm_from_utf8_keyword("create-if-missing");
+    k_rocksdb_options_info_log_level = scm_from_utf8_keyword("info-log-level");
+    k_rocksdb_options_write_buffer_size = scm_from_utf8_keyword("write-buffer-size");
+    k_rocksdb_options_num_levels = scm_from_utf8_keyword("num-levels");
+    k_rocksdb_options_max_bytes_for_level_base = scm_from_utf8_keyword("max-bytes-for-level-base");
+    k_rocksdb_options_max_bytes_for_level_multiplier = scm_from_utf8_keyword("max-bytes-for-level-multiplier");
+    k_rocksdb_options_level_compaction_dynamic_level_bytes = scm_from_utf8_keyword("level-compaction-dynamic-level-bytes");
+    k_rocksdb_options_max_subcompactions = scm_from_utf8_keyword("max-subcompactions");
+    k_rocksdb_options_max_background_jobs = scm_from_utf8_keyword("max-background-jobs");
+
     scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?", grocksdb_options_destroy);
 
-    DEFOPT("rocksdb-options-create", 0, 1, grocksdb_options_create);
+    DEFREST("rocksdb-options-create", grocksdb_options_create);
     DEF("rocksdb-options-set-create-if-missing!", 2, grocksdb_options_set_create_if_missing);
     DEFOPT("load-options-from-file", 1, 1, gload_options_from_file);
     DEFOPT("get-latest-options-filename", 1, 1, gget_latest_options_filename);
@@ -74,6 +163,7 @@ void init_options() {
     DEFOPT("rocksdb-options->string", 1, 1, gget_string_from_dboptions);
     DEF("rocksdb-options-string->alist", 1, grocksdb_options_string_to_alist);
     DEF("rocksdb->rocksdb-options", 1, grocksdb_get_options);
+    DEF("rocksdb-options?", 1, grocksdb_options_p);
 
 //  DEF("rocksdb-options-set-info-log-level", 2, grocksdb_options_set_info_log_level);
     DEF("rocksdb-options-get-info-log-level", 1, grocksdb_options_get_info_log_level);

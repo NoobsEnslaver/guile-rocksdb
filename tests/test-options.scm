@@ -30,6 +30,13 @@
       (test-assert (and (string? file-name)
                         (string-prefix? "OPTIONS-" file-name)
                         (file-exists? (string-append tmp1 "/" file-name))))))
+   (test-group
+    "options:get-latest-options-filename file env"
+    (receive (file-name undef)
+        (get-latest-options-filename tmp1 (rocksdb-create-default-env))
+      (test-assert (and (string? file-name)
+                        (string-prefix? "OPTIONS-" file-name)
+                        (file-exists? (string-append tmp1 "/" file-name))))))
 
    (test-group
     "options:load-options-from-file unexisting file"
@@ -140,4 +147,28 @@
       (test-assert (alist=? tokens-3 tokens-4))
       (test-equal (assoc-ref tokens-4 "stats_dump_period_sec") "791")))
 
+   (test-group
+    "options:rocksdb-options-create with keys"
+    (let* ([dbopts (rocksdb-options-create :create-if-missing #t
+                                           :info-log-level 3
+                                           :write-buffer-size 65536
+                                           :num-levels 7
+                                           :max-bytes-for-level-base (* 128 1024 1024)
+                                           :max-bytes-for-level-multiplier 5.1
+                                           :level-compaction-dynamic-level-bytes #f
+                                           :max-subcompactions 11
+                                           :max-background-jobs 12)]
+           [dbopts-alist (options->alist dbopts)])
+      (test-assert (rocksdb-options? dbopts))
+      (test-equal "true" (assoc-ref dbopts-alist "create_if_missing"))
+      (test-equal "ERROR_LEVEL" (assoc-ref dbopts-alist "info_log_level"))
+      (test-equal "65536" (assoc-ref dbopts-alist "write_buffer_size"))
+      (test-equal "7" (assoc-ref dbopts-alist "num_levels"))
+      (test-equal (number->string (* 128 1024 1024)) (assoc-ref dbopts-alist "max_bytes_for_level_base"))
+      ;; skip because localized to string conversion, it works
+      ;; (test-equal "5.1" (assoc-ref dbopts-alist "max_bytes_for_level_multiplier"))
+      (test-equal "false" (assoc-ref dbopts-alist "level_compaction_dynamic_level_bytes"))
+      (test-equal "11" (assoc-ref dbopts-alist "max_subcompactions"))
+      (test-equal "12" (assoc-ref dbopts-alist "max_background_jobs"))
+      ))
    ))

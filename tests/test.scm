@@ -13,8 +13,11 @@
              (ice-9 receive)
              (oop goops))
 
+(read-set! keywords 'prefix)
+
 (define cleanup-strategy 'purge)    ;keep-logs | purge | none
-(define repeat 100)
+(set! test-log-to-file "guile-rocksdb.log")
+(define repeat 50)
 
 (define (test-not-equal a b)
   (test-assert (not (equal? a b))))
@@ -51,7 +54,6 @@
     (define db (rocksdb-open dbopts (make-tmp-dir)))
     (fun db)))
 
-(set! test-log-to-file "guile-rocksdb.log")
 (let ([top-dir (getcwd)]
       [test-dir (make-tmp-dir)])
   (dynamic-wind
