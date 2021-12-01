@@ -4,15 +4,13 @@
 #include "rocksdb/convenience.h"
 #include "rocksdb/options.h"
 
-#define ASSERT_DB(db) scm_assert_foreign_object_type(scm_rocksdb_t, db); \
-    if(scm_foreign_object_ref(db, 1)) scm_misc_error(NULL, "db handler already closed", SCM_EOL)
-
 using namespace ROCKSDB_NAMESPACE;
 
 using std::vector;
 using std::unordered_set;
 
 extern "C" {
+
 extern SCM scm_rocksdb_t;
 extern SCM scm_rocksdb_options_t;
 extern SCM scm_rocksdb_env_t;
@@ -26,10 +24,10 @@ struct rocksdb_options_t { Options rep; };
 struct rocksdb_env_t { Env* rep; bool is_default;};
 struct rocksdb_cache_t { std::shared_ptr<Cache> rep; };
 
-SCM grocksdb_options_get_info_log_level(SCM scm_options){
-    scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
-    return scm_from_int(rocksdb_options_get_info_log_level((rocksdb_options_t*)scm_foreign_object_ref(scm_options, 0)));
-}
+// SCM grocksdb_options_get_info_log_level(SCM scm_options){
+//     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
+//     return scm_from_int(rocksdb_options_get_info_log_level((rocksdb_options_t*)scm_foreign_object_ref(scm_options, 0)));
+// }
 
 // spec: (string, rocksdb_cache_t?) -> (rocksdb_options_t, (list (string . rocksdb_options_t))) | (#f, string)
 SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
@@ -225,14 +223,11 @@ SCM grocksdb_options_string_to_alist(SCM scm_string_db_opts){
 
 // spec: (rocksdb_t) -> rocksdb_options_t
 SCM grocksdb_get_options(SCM scm_db){
-    ASSERT_DB(scm_db);
+    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     rocksdb_t* c_db = (rocksdb_t *)scm_get_ref(scm_db);
     return scm_make_foreign_object_2(scm_rocksdb_options_t,
                                      new rocksdb_options_t{c_db->rep->GetOptions()}, (void*)true);
 }
-
-
-
 }
 
 // ---------------- TODO ------------------

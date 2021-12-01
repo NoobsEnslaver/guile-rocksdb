@@ -14,12 +14,16 @@
              (oop goops))
 
 (define cleanup-strategy 'purge)    ;keep-logs | purge | none
+(define repeat 100)
 
 (define (test-not-equal a b)
   (test-assert (not (equal? a b))))
 
 (define (make-tmp-dir)
   (mkdtemp "tmp-XXXXXX"))
+
+(define (alist=? a b)
+  (every (lambda (x) (equal? x (assoc (car x) b))) a))
 
 (define (rm-rf tree)
   (cond
@@ -44,7 +48,8 @@
 (define (with-db fun)
   (let ([dbopts (rocksdb-options-create)])
     (rocksdb-options-set-create-if-missing! dbopts 1)
-    (fun (rocksdb-open dbopts (make-tmp-dir)))))
+    (define db (rocksdb-open dbopts (make-tmp-dir)))
+    (fun db)))
 
 (set! test-log-to-file "guile-rocksdb.log")
 (let ([top-dir (getcwd)]
@@ -54,9 +59,12 @@
       (chdir test-dir)
       (test-begin "rocksdb-guile"))
     (lambda ()
-      (include "test-main.scm")
-      (include "test-options.scm")
-      (include "test-iterator.scm"))
+      (do ([i 1 (+ i 1)]) ((> i repeat))
+        (begin (include "test-main.scm"))
+        (begin (include "test-options.scm"))
+        (begin (include "test-iterator.scm"))
+        (begin (include "test-readoptions.scm"))
+        (gc)))
     (lambda ()
       (test-end)
       (chdir top-dir)

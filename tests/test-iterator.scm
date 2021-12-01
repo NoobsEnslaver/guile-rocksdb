@@ -5,7 +5,7 @@
     (do ([i 1 (+ i 1)]) ([> i 10])
       (rocksdb-put db (make-u8vector 5 i) (make-u8vector 10 i)))
 
-    (define iter (rocksdb-create-iterator db))
+    (define iter (rocksdb-create-iterator db (rocksdb-readoptions-create)))
 
     (test-group "invalid iterator"
      (test-assert (rocksdb-iterator? iter))
@@ -71,4 +71,7 @@
      (test-equal #f (rocksdb-iter-next! iter))
      (test-equal #f (rocksdb-iter-prev! iter))
      (test-equal #f (rocksdb-iter-key iter))
-     (test-equal #f (rocksdb-iter-value iter))))))
+     (test-equal #f (rocksdb-iter-value iter)))
+
+    ;; (rocksdb-iter-destroy! iter)
+    )))

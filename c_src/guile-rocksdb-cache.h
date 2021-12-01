@@ -1,17 +1,18 @@
+//TODO: rewrite with c++ to set memory_allocator to scm_gc_malloc?
 // --------------- Wrapers -------------------------
-static SCM grocksdb_cache_create_lru(SCM capacity){
+SCM grocksdb_cache_create_lru(SCM capacity){
     SCM_ASSERT_TYPE(scm_integer_p(capacity), capacity, SCM_ARG1, "rocksdb_cache_create_lru", "integer");
     scm_make_foreign_object_1(scm_rocksdb_cache_t, rocksdb_cache_create_lru(scm_to_size_t(capacity)));
 };
 
-static void grocksdb_cache_destroy(SCM cache){
-    rocksdb_cache_t *ref = scm_foreign_object_ref(cache, 0);
-    if(ref) rocksdb_cache_destroy(ref);
+void grocksdb_cache_destroy(SCM cache){
+    SAFE_DESTROY_WITH(cache, rocksdb_cache_destroy);
 };
 
 // --------------- Init ----------------------------
-static void init_cache() {
+void init_cache() {
     scm_rocksdb_cache_t = define_type_wrapper("rocksdb-cache", grocksdb_cache_destroy);
 
-    DEF("rocksdb-cache-create-lru", 1, &grocksdb_cache_create_lru);
+    DEF("rocksdb-cache-create-lru", 1, grocksdb_cache_create_lru);
+    //DEF("rocksdb-cache-destroy!", 1, grocksdb_cache_destroy);
 }

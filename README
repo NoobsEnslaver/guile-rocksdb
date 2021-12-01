@@ -12,3 +12,7 @@
 
 ** Usage
    TODO
+
+* TODO
+  - guix.scm
+  - maybe replace vector* functions with u8vector*?

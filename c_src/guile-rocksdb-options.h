@@ -1,32 +1,28 @@
 // --------------- Wrapers -------------------------
-static SCM grocksdb_options_create(){
+SCM grocksdb_options_create(){
     return scm_make_foreign_object_2(scm_rocksdb_options_t, rocksdb_options_create(), false);
 }
 
-static void grocksdb_options_destroy(SCM options){
-    //if not already consumed or destructed by db
-    if(scm_foreign_object_ref(options, 0) && !scm_foreign_object_ref(options, 1))
-        rocksdb_options_destroy((rocksdb_options_t *)scm_foreign_object_ref(options, 0));
+void grocksdb_options_destroy(SCM options){
+    if(!scm_foreign_object_ref(options, 1))
+        SAFE_DESTROY_WITH(options, rocksdb_options_destroy);
 }
 
-static SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_missing){
+SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_missing){
     scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
-    unsigned char flag = scm_is_true(create_if_missing)? 1 : 0;
-
-    rocksdb_options_set_create_if_missing(scm_foreign_object_ref(options, 0), flag);
+    rocksdb_options_set_create_if_missing(scm_get_ref(options), scm_is_true(create_if_missing));
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_set_options(SCM scm_db, SCM scm_options_alist){
-    ASSERT_DB(scm_db);
-    SCM_ASSERT_TYPE(scm_list_p(scm_options_alist), scm_options_alist, SCM_ARG2, "rocksdb-set-options", "alist (string . string)");
+SCM grocksdb_set_options(SCM scm_db, SCM scm_options_alist){
+    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    SCM_ASSERT_TYPE(scm_list_p(scm_options_alist), scm_options_alist, SCM_ARG2,
+                    "rocksdb-set-options", "alist (string . string)");
 
+    char* err = NULL;
     int count = scm_to_int(scm_length(scm_options_alist));
     const char* keys[count];
     const char* values[count];
-    char* err = NULL;
-    rocksdb_t* db = scm_foreign_object_ref(scm_db, 0);
-
     SCM pair,k,v;
     for (int i=0; i < count; i++){
         pair = scm_car(scm_options_alist);
@@ -42,7 +38,7 @@ static SCM grocksdb_set_options(SCM scm_db, SCM scm_options_alist){
         values[i] = scm_to_utf8_string(v);
         scm_options_alist = scm_cdr(scm_options_alist);
     }
-    rocksdb_set_options(db, count, keys, values, &err);
+    rocksdb_set_options(scm_get_ref(scm_db), count, keys, values, &err);
     if(err != NULL) scm_syserror(err);
 
     return SCM_UNSPECIFIED;
@@ -58,16 +54,16 @@ extern SCM grocksdb_options_string_to_alist(SCM scm_string_db_opts);
 extern SCM grocksdb_get_options(SCM scm_db);
 
 // for tests
-static SCM grocksdb_options_get_info_log_level(SCM scm_options){
+SCM grocksdb_options_get_info_log_level(SCM scm_options){
     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
     return scm_from_int(rocksdb_options_get_info_log_level(scm_foreign_object_ref(scm_options, 0)));
 }
 
 // --------------- Init ----------------------------
 void init_options() {
-    scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?",  grocksdb_options_destroy);
+    scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?", grocksdb_options_destroy);
 
-    DEF("rocksdb-options-create", 0, grocksdb_options_create);
+    DEFOPT("rocksdb-options-create", 0, 1, grocksdb_options_create);
     DEF("rocksdb-options-set-create-if-missing!", 2, grocksdb_options_set_create_if_missing);
     DEFOPT("load-options-from-file", 1, 1, gload_options_from_file);
     DEFOPT("get-latest-options-filename", 1, 1, gget_latest_options_filename);
@@ -91,7 +87,7 @@ void init_options() {
 // only few, like 'rocksdb_options_statistics_get_string', another options you may see
 // in OPTIONS-XXXX file. All function here will be realized on demand.
 // ----------------------------------------------------------------------------------
-// static SCM grocksdb_options_set_info_log_level(SCM scm_options, SCM n){
+// SCM grocksdb_options_set_info_log_level(SCM scm_options, SCM n){
 //     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
 //     SCM_ASSERT_TYPE(scm_integer_p(n), n, SCM_ARG2, "rocksdb-options-set-info-log-level", "integer");
 
@@ -99,7 +95,7 @@ void init_options() {
 //     return SCM_UNSPECIFIED;
 // }
 
-//static SCM grocksdb_options_increase_parallelism(SCM options, SCM n){
+//SCM grocksdb_options_increase_parallelism(SCM options, SCM n){
 //    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
 //    SCM_ASSERT_TYPE(scm_integer_p(n), n, SCM_ARG2, "rocksdb_options_increase_parallelism", "integer");
 //
@@ -107,7 +103,7 @@ void init_options() {
 //    return SCM_UNSPECIFIED;
 //}
 
-//static SCM grocksdb_options_optimize_level_style_compaction(SCM options, SCM n){
+//SCM grocksdb_options_optimize_level_style_compaction(SCM options, SCM n){
 //    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
 //    SCM_ASSERT_TYPE(scm_integer_p(n), n, SCM_ARG2, "rocksdb_options_optimize_level_style_compaction", "integer");
 //

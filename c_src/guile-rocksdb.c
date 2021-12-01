@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
+//#include <pthread.h>
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
 #include "guile-rocksdb-options.h"

@@ -1,6 +1,6 @@
 // --------------- Wrapers -------------------------
 
-static SCM grocksdb_backup_engine_open(SCM options, SCM path){
+SCM grocksdb_backup_engine_open(SCM options, SCM path){
     ASSERT_CONSUME_OPTIONS(options);
     SCM_ASSERT_TYPE(scm_string_p(path), path, SCM_ARG2, "rocksdb_backup_engine_open", "string");
 
@@ -12,9 +12,9 @@ static SCM grocksdb_backup_engine_open(SCM options, SCM path){
     return scm_make_foreign_object_2(scm_rocksdb_backup_engine_t, bk, (void *)false);
 }
 
-static SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
+SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    ASSERT_DB(db);
+    scm_assert_foreign_object_type(scm_rocksdb_t, db);
 
     char *err = NULL;
     rocksdb_backup_engine_create_new_backup(scm_get_ref(bk),
@@ -23,19 +23,19 @@ static SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_backup_engine_create_new_backup_flush(SCM bk, SCM db, SCM flush_before_backup){
+SCM grocksdb_backup_engine_create_new_backup_flush(SCM bk, SCM db, SCM flush_before_backup){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    ASSERT_DB(db);
+    scm_assert_foreign_object_type(scm_rocksdb_t, db);
 
     char *err = NULL;
-    unsigned char flag = scm_is_false(flush_before_backup)? 0 : 1;
     rocksdb_backup_engine_create_new_backup_flush(scm_get_ref(bk),
-                                                  scm_get_ref(db), flag, &err);
+                                                  scm_get_ref(db),
+                                                  scm_is_true(flush_before_backup), &err);
     if(err != NULL) scm_syserror(err);
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_keep){
+SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_keep){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
     SCM_ASSERT_TYPE(scm_integer_p(num_backups_to_keep), num_backups_to_keep, SCM_ARG2,
                     "rocksdb_backup_engine_purge_old_backups", "integer");
@@ -47,18 +47,18 @@ static SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_k
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_restore_options_create(){
+SCM grocksdb_restore_options_create(){
     return scm_make_foreign_object_2(scm_rocksdb_restore_options_t,
                                      rocksdb_restore_options_create(), (void *)false);
 }
 
-static void grocksdb_restore_options_destroy(SCM opt){
+void grocksdb_restore_options_destroy(SCM opt){
     rocksdb_restore_options_t *ref = scm_foreign_object_ref(opt, 0);
     bool consumed = scm_foreign_object_ref(opt, 1);
     if(ref && !consumed) rocksdb_restore_options_destroy(ref);
 }
 
-static SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
+SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
     scm_assert_foreign_object_type(scm_rocksdb_restore_options_t, options);
     SCM_ASSERT_TYPE(scm_integer_p(n), n, SCM_ARG2, "rocksdb_restore_options_set_keep_log_files", "integer");
 
@@ -66,7 +66,7 @@ static SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
+SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
     SCM_ASSERT_TYPE(scm_integer_p(backup_id), backup_id, SCM_ARG2, "rocksdb_backup_engine_verify_backup", "integer");
 
@@ -76,7 +76,7 @@ static SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_backup_engine_restore_db_from_latest_backup(SCM bk, SCM db_dir, SCM wal_dir, SCM opt){
+SCM grocksdb_backup_engine_restore_db_from_latest_backup(SCM bk, SCM db_dir, SCM wal_dir, SCM opt){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
     SCM_ASSERT_TYPE(scm_string_p(db_dir), db_dir, SCM_ARG2,
                     "rocksdb_backup_engine_restore_db_from_latest_backup", "string");
@@ -94,19 +94,19 @@ static SCM grocksdb_backup_engine_restore_db_from_latest_backup(SCM bk, SCM db_d
     return SCM_UNSPECIFIED;
 }
 
-static SCM grocksdb_backup_engine_get_backup_info(SCM bk){
+SCM grocksdb_backup_engine_get_backup_info(SCM bk){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
     rocksdb_backup_engine_t* ref = scm_get_ref(bk);
     return scm_make_foreign_object_1(scm_rocksdb_backup_engine_info_t,
                                      (void *)rocksdb_backup_engine_get_backup_info(ref));
 }
 
-static SCM grocksdb_backup_engine_info_count(SCM info){
+SCM grocksdb_backup_engine_info_count(SCM info){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     return scm_from_size_t(rocksdb_backup_engine_info_count(scm_get_ref(info)));
 }
 
-static SCM grocksdb_backup_engine_info_timestamp(SCM info, SCM index){
+SCM grocksdb_backup_engine_info_timestamp(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_timestamp", "integer");
 
@@ -115,7 +115,7 @@ static SCM grocksdb_backup_engine_info_timestamp(SCM info, SCM index){
     return scm_from_int64(result);
 }
 
-static SCM grocksdb_backup_engine_info_backup_id(SCM info, SCM index){
+SCM grocksdb_backup_engine_info_backup_id(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_backup_id", "integer");
 
@@ -124,7 +124,7 @@ static SCM grocksdb_backup_engine_info_backup_id(SCM info, SCM index){
     return scm_from_uint32(result);
 }
 
-static SCM grocksdb_backup_engine_info_size(SCM info, SCM index){
+SCM grocksdb_backup_engine_info_size(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_size", "integer");
 
@@ -133,7 +133,7 @@ static SCM grocksdb_backup_engine_info_size(SCM info, SCM index){
     return scm_from_uint64(result);
 }
 
-static SCM grocksdb_backup_engine_info_number_files(SCM info, SCM index){
+SCM grocksdb_backup_engine_info_number_files(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_number_files", "integer");
 
@@ -142,13 +142,13 @@ static SCM grocksdb_backup_engine_info_number_files(SCM info, SCM index){
     return scm_from_uint32(result);
 }
 
-static void grocksdb_backup_engine_info_destroy(SCM info){
+void grocksdb_backup_engine_info_destroy(SCM info){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
     rocksdb_backup_engine_info_t *ref = scm_foreign_object_ref(info, 0);
     if(ref) rocksdb_backup_engine_info_destroy(ref);
 }
 
-static SCM grocksdb_backup_engine_close(SCM bk){
+SCM grocksdb_backup_engine_close(SCM bk){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
     rocksdb_backup_engine_t *ref = scm_foreign_object_ref(bk, 0);
     bool closed = scm_foreign_object_ref(bk, 1);
@@ -157,9 +157,9 @@ static SCM grocksdb_backup_engine_close(SCM bk){
 }
 
 // --------------- Init -------------------------
-static void init_backup() {
+void init_backup() {
     scm_rocksdb_restore_options_t = define_type_wrapper_2("rocksdb-restore-options", "already-consumed?",
-                                                        grocksdb_restore_options_destroy);
+                                                          grocksdb_restore_options_destroy);
     scm_rocksdb_backup_engine_info_t = define_type_wrapper("rocksdb-backup-engine-info",
                                                            grocksdb_backup_engine_info_destroy); // const?
     scm_rocksdb_backup_engine_t = define_type_wrapper_2("rocksdb-backup-engine", "already-closed?",

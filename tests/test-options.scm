@@ -1,22 +1,20 @@
-(define (options->alist opt)
-  (rocksdb-options-string->alist (rocksdb-options->string opt)))
-
-(define (alist->options-string alist)
-  (string-append
-   (string-join
-    (map (lambda (x)
-           (string-join (list (car x) (cdr x)) "=")) alist)
-    ";") ";"))
-
-(define (alist=? a b)
-  (every (lambda (x) (equal? x (assoc (car x) b))) a))
-
 (test-group "options"
  (let ([tmp1 (make-tmp-dir)]
        [dbopts (rocksdb-options-create)])
    (rocksdb-options-set-create-if-missing! dbopts 1)
    (let ([db (rocksdb-open dbopts tmp1)])
      "just open (new) and close db to create OPTIONS file")
+
+   (define (options->alist opt)
+     (rocksdb-options-string->alist (rocksdb-options->string opt)))
+
+   (define (alist->options-string alist)
+     (string-append
+      (string-join
+       (map (lambda (x)
+              (string-join (list (car x) (cdr x)) "=")) alist)
+       ";") ";"))
+
 
    (test-group
     "options:get-latest-options-filename file not exists"
@@ -141,6 +139,5 @@
       (define tokens-4 (rocksdb-options-string->alist (rocksdb-options->string dbopts-3)))
       (test-assert (alist=? tokens-3 tokens-4))
       (test-equal (assoc-ref tokens-4 "stats_dump_period_sec") "791")))
-
 
    ))

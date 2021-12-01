@@ -1,71 +1,66 @@
 #define ASSERT_ITER(i) scm_assert_foreign_object_type(scm_rocksdb_iterator_t, i); \
-    if (!rocksdb_iter_valid(scm_foreign_object_ref(scm_iterator, 0))) return SCM_BOOL_F
+    if (!rocksdb_iter_valid(scm_get_ref(scm_iterator))) return SCM_BOOL_F
 
-static SCM grocksdb_create_iterator(SCM scm_db, SCM scm_readopts){
-    ASSERT_DB(scm_db);
+SCM grocksdb_create_iterator(SCM scm_db, SCM scm_readopts){
     rocksdb_readoptions_t* readopts;
+    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    BIND_REF_OR_DEFAULT(scm_rocksdb_readoptions_t, scm_readopts, readopts, default_rocksdb_readoptions);
+    rocksdb_iterator_t* iter = rocksdb_create_iterator(scm_get_ref(scm_db), readopts);
 
-    if (SCM_UNBNDP(scm_readopts)){
-        readopts = rocksdb_readoptions_create();
-    } else {
-        scm_assert_foreign_object_type(scm_rocksdb_readoptions_t, scm_readopts);
-        readopts = scm_foreign_object_ref(scm_readopts, 0);
-    }
-
-    rocksdb_iterator_t* iter = rocksdb_create_iterator(scm_foreign_object_ref(scm_db, 0),
-                                                       readopts);
-
-    return scm_make_foreign_object_1(scm_rocksdb_iterator_t, iter);
+    void* slots[4] = {iter, scm_db, NULL, SCM_UNBNDP(scm_readopts) ? NULL : scm_readopts};
+    return scm_make_foreign_object_n(scm_rocksdb_iterator_t, 4, slots);
 }
 
-static SCM grocksdb_create_iterator_cf(SCM scm_db, SCM scm_cf, SCM scm_readopts){
-    ASSERT_DB(scm_db);
-    scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
+SCM grocksdb_create_iterator_cf(SCM scm_db, SCM scm_cf, SCM scm_readopts){
     rocksdb_readoptions_t* readopts;
+    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
+    BIND_REF_OR_DEFAULT(scm_rocksdb_readoptions_t, scm_readopts, readopts, default_rocksdb_readoptions);
 
-    if (SCM_UNBNDP(scm_readopts)){
-        readopts = rocksdb_readoptions_create();
-    } else {
-        scm_assert_foreign_object_type(scm_rocksdb_readoptions_t, scm_readopts);
-        readopts = scm_foreign_object_ref(scm_readopts, 0);
-    }
-
-    rocksdb_iterator_t* iter = rocksdb_create_iterator_cf(scm_foreign_object_ref(scm_db, 0),
+    rocksdb_iterator_t* iter = rocksdb_create_iterator_cf(scm_get_ref(scm_db),
                                                           readopts,
-                                                          scm_foreign_object_ref(scm_cf, 0));
+                                                          scm_get_ref(scm_cf));
 
-    return scm_make_foreign_object_1(scm_rocksdb_iterator_t, iter);
+    void* slots[4] = {iter, scm_db, scm_cf, SCM_UNBNDP(scm_readopts) ? NULL : scm_readopts};
+    return scm_make_foreign_object_n(scm_rocksdb_iterator_t, 4, slots);
 }
 
 static void grocksdb_iter_destroy(SCM scm_iterator){
-    rocksdb_iter_destroy(scm_foreign_object_ref(scm_iterator, 0));
+    SCM scm_db = scm_foreign_object_ref(scm_iterator, 1);
+    if (scm_db){
+        rocksdb_t* db = scm_foreign_object_ref(scm_db, 0);
+        if (db){
+            SAFE_DESTROY_WITH(scm_iterator, rocksdb_iter_destroy);
+        }
+    }
+    scm_remember_upto_here_1(scm_db);
 }
 
-static SCM grocksdb_iter_seek_to_first(SCM scm_iterator){
+SCM grocksdb_iter_seek_to_first(SCM scm_iterator){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
     rocksdb_iter_seek_to_first(scm_foreign_object_ref(scm_iterator, 0));
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_seek_to_last(SCM scm_iterator){
+SCM grocksdb_iter_seek_to_last(SCM scm_iterator){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
     rocksdb_iter_seek_to_first(scm_foreign_object_ref(scm_iterator, 0));
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_next(SCM scm_iterator){
+SCM grocksdb_iter_next(SCM scm_iterator){
     ASSERT_ITER(scm_iterator);
     rocksdb_iter_next(scm_foreign_object_ref(scm_iterator, 0));
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_prev(SCM scm_iterator){
+SCM grocksdb_iter_prev(SCM scm_iterator){
     ASSERT_ITER(scm_iterator);
     rocksdb_iter_prev(scm_foreign_object_ref(scm_iterator, 0));
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_seek(SCM scm_iterator, SCM key){
+SCM grocksdb_iter_seek(SCM scm_iterator, SCM key){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
     SCM_ASSERT_TYPE(scm_bytevector_p(key), key, SCM_ARG2, "rocksdb-iter-seek!", "bytevector");
     rocksdb_iter_seek(scm_foreign_object_ref(scm_iterator, 0),
@@ -74,7 +69,7 @@ static SCM grocksdb_iter_seek(SCM scm_iterator, SCM key){
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_seek_for_prev(SCM scm_iterator, SCM key){
+SCM grocksdb_iter_seek_for_prev(SCM scm_iterator, SCM key){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
     SCM_ASSERT_TYPE(scm_bytevector_p(key), key, SCM_ARG2, "rocksdb-iter-seek-for-prev!", "bytevector");
     rocksdb_iter_seek_for_prev(scm_foreign_object_ref(scm_iterator, 0),
@@ -83,21 +78,42 @@ static SCM grocksdb_iter_seek_for_prev(SCM scm_iterator, SCM key){
     return SCM_BOOL_T;
 }
 
-static SCM grocksdb_iter_key(SCM scm_iterator){
+SCM grocksdb_iter_key(SCM scm_iterator){
     ASSERT_ITER(scm_iterator);
     size_t len;
     const uint8_t *ret = rocksdb_iter_key(scm_foreign_object_ref(scm_iterator, 0), &len);
     return ret == NULL? SCM_BOOL_F : scm_copy_u8vector(ret, len);
 }
 
-static SCM grocksdb_iter_value(SCM scm_iterator){
+//same, but without typechecking and copying data
+SCM grocksdb_iter_key_unsafe(SCM scm_iterator){
+    size_t len;
+    rocksdb_iterator_t *iter = (rocksdb_iterator_t *)scm_foreign_object_ref(scm_iterator, 0);
+    if (!rocksdb_iter_valid(iter)) return SCM_BOOL_F;
+    const uint8_t *ret = rocksdb_iter_key(iter, &len);
+    //uint8_t * casting is hack for skip warning about ignoring 'const', we 'take' and realy may to change it
+    //FIXME: we need to protect key for garbage collection
+    return ret == NULL? SCM_BOOL_F : scm_take_u8vector((uint8_t *)ret, len);
+}
+
+SCM grocksdb_iter_value(SCM scm_iterator){
     ASSERT_ITER(scm_iterator);
     size_t len;
     const uint8_t* ret = rocksdb_iter_value(scm_foreign_object_ref(scm_iterator, 0), &len);
     return ret == NULL? SCM_BOOL_F : scm_copy_u8vector(ret, len);
 }
 
-static SCM grocksdb_iter_get_error(SCM scm_iterator){
+//same, but without typechecking and copying data
+SCM grocksdb_iter_value_unsafe(SCM scm_iterator){
+    size_t len;
+    rocksdb_iterator_t *iter = (rocksdb_iterator_t *)scm_foreign_object_ref(scm_iterator, 0);
+    const uint8_t *ret = rocksdb_iter_value(iter, &len);
+    //uint8_t * casting is hack for skip warning about ignoring 'const', we 'take' and realy may to change it
+    //FIXME: we need to protect key for garbage collection
+    return ret == NULL? SCM_BOOL_F : scm_take_u8vector((uint8_t *)ret, len);
+}
+
+SCM grocksdb_iter_get_error(SCM scm_iterator){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
     char* err = NULL;
     rocksdb_iter_get_error(scm_foreign_object_ref(scm_iterator, 0), &err);
@@ -105,12 +121,14 @@ static SCM grocksdb_iter_get_error(SCM scm_iterator){
 }
 
 // ------------------ utils --------------------
-static SCM grocksdb_iterator_p(SCM obj){
+SCM grocksdb_iterator_p(SCM obj){
     return scm_from_bool(SCM_IS_A_P(obj, scm_rocksdb_iterator_t));
 }
 
 void init_iterator(){
-    scm_rocksdb_iterator_t = define_type_wrapper("rocksdb-iterator", grocksdb_iter_destroy);
+    scm_rocksdb_iterator_t = define_type_wrapper_4("rocksdb-iterator", "db", "cf", "opts",  NULL/* grocksdb_iter_destroy */);
+
+    DEF("rocksdb-iter-destroy!", 1, grocksdb_iter_destroy);
 
     DEFOPT("rocksdb-create-iterator", 1, 1, grocksdb_create_iterator);
     DEFOPT("rocksdb-create-iterator-cf", 2, 1, grocksdb_create_iterator_cf);
@@ -120,10 +138,11 @@ void init_iterator(){
     DEF("rocksdb-iter-next!", 1, grocksdb_iter_next);
     DEF("rocksdb-iter-seek!", 2, grocksdb_iter_seek);
     DEF("rocksdb-iter-seek-for-prev!", 2, grocksdb_iter_seek_for_prev);
-    // DEF("rocksdb-iter-valid", 1, grocksdb_iter_valid); //to prevent explicit usage
     DEF("rocksdb-iter-get-error", 1, grocksdb_iter_get_error);
     DEF("rocksdb-iter-key", 1, grocksdb_iter_key);
     DEF("rocksdb-iter-value", 1, grocksdb_iter_value);
+    DEF("rocksdb-iter-key-unsafe", 1, grocksdb_iter_key_unsafe);
+    DEF("rocksdb-iter-value-unsafe", 1, grocksdb_iter_value_unsafe);
     DEF("rocksdb-iterator?", 1, grocksdb_iterator_p);
 }
 
