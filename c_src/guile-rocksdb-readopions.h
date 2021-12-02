@@ -18,7 +18,7 @@ static rocksdb_readoptions_t* default_rocksdb_readoptions;
 
 SCM grocksdb_readoptions_create(SCM alist){
     rocksdb_readoptions_t *opts = rocksdb_readoptions_create();
-    if (!SCM_UNBNDP(alist)){
+    if(!SCM_UNBNDP(alist)){
         SCM_ASSERT_TYPE(scm_list_p(alist), alist, SCM_ARG1, "rocksdb-readoptions-create", "alist");
         SCM pair, key, val;
         while(!scm_null_p(alist)){
@@ -26,48 +26,48 @@ SCM grocksdb_readoptions_create(SCM alist){
             alist = scm_cdr(alist);
             key = scm_car(pair);
             val = scm_cdr(pair);
-            if(scm_eq_p(key, scm_verify_checksums_symbol))
+            if(scm_is_eq(key, scm_verify_checksums_symbol))
                 rocksdb_readoptions_set_verify_checksums(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_fill_cache_symbol))
+            else if(scm_is_eq(key, scm_fill_cache_symbol))
                 rocksdb_readoptions_set_fill_cache(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_snapshot_symbol)){
+            else if(scm_is_eq(key, scm_snapshot_symbol)){
                 scm_assert_foreign_object_type(scm_rocksdb_snapshot_t, val);
                 rocksdb_readoptions_set_snapshot(opts, scm_foreign_object_ref(val, 0));}
-            else if (scm_eq_p(key, scm_iterate_upper_bound_symbol)){
+            else if(scm_is_eq(key, scm_iterate_upper_bound_symbol)){
                 SCM_ASSERT_TYPE(scm_string_p(val), val, SCM_ARG1,
                                 "rocksdb_readoptions.iterate_upper_bound", "string");
                 size_t len;
                 char *str = scm_to_utf8_stringn(val, &len);
                 rocksdb_readoptions_set_iterate_upper_bound(opts, str, len);}
-            else if (scm_eq_p(key, scm_iterate_lower_bound_symbol)){
+            else if(scm_is_eq(key, scm_iterate_lower_bound_symbol)){
                 SCM_ASSERT_TYPE(scm_string_p(val), val, SCM_ARG1,
                                 "rocksdb_readoptions.iterate_lower_bound", "string");
                 size_t len;
                 char *str = scm_to_utf8_stringn(val, &len);
                 rocksdb_readoptions_set_iterate_lower_bound(opts, str, len);}
-            else if (scm_eq_p(key, scm_read_tier_symbol)){
+            else if(scm_is_eq(key, scm_read_tier_symbol)){
                 SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
                                 "rocksdb_readoptions.read_tier", "integer");
                 rocksdb_readoptions_set_read_tier(opts, scm_to_int(val));}
-            else if (scm_eq_p(key, scm_tailing_symbol))
+            else if(scm_is_eq(key, scm_tailing_symbol))
                 rocksdb_readoptions_set_tailing(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_readahead_size_symbol)){
+            else if(scm_is_eq(key, scm_readahead_size_symbol)){
                 SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
                                 "rocksdb_readoptions.readahead_size", "integer");
                 rocksdb_readoptions_set_readahead_size(opts, scm_to_int(val));}
-            else if (scm_eq_p(key, scm_prefix_same_as_start_symbol))
+            else if(scm_is_eq(key, scm_prefix_same_as_start_symbol))
                 rocksdb_readoptions_set_prefix_same_as_start(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_pin_data_symbol))
+            else if(scm_is_eq(key, scm_pin_data_symbol))
                 rocksdb_readoptions_set_pin_data(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_total_order_seek_symbol))
+            else if(scm_is_eq(key, scm_total_order_seek_symbol))
                 rocksdb_readoptions_set_total_order_seek(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_max_skippable_internal_keys_symbol)){
+            else if(scm_is_eq(key, scm_max_skippable_internal_keys_symbol)){
                 SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
                                 "rocksdb_readoptions.max_skippable_internal_keys", "integer");
                 rocksdb_readoptions_set_max_skippable_internal_keys(opts, scm_to_int(val));}
-            else if (scm_eq_p(key, scm_background_purge_on_iterator_cleanup_symbol))
+            else if(scm_is_eq(key, scm_background_purge_on_iterator_cleanup_symbol))
                 rocksdb_readoptions_set_background_purge_on_iterator_cleanup(opts, scm_is_true(val));
-            else if (scm_eq_p(key, scm_ignore_range_deletions_symbol))
+            else if(scm_is_eq(key, scm_ignore_range_deletions_symbol))
                 rocksdb_readoptions_set_ignore_range_deletions(opts, scm_is_true(val));
             else
                 scm_wrong_type_arg_msg("rocksdb-readoptions-create", SCM_ARG1, key, "unknown key");
@@ -111,20 +111,20 @@ void grocksdb_readoptions_destroy(SCM scm_readoptions){
 void init_readoptions() {
     scm_rocksdb_readoptions_t = define_type_wrapper("rocksdb-readoptions", grocksdb_readoptions_destroy);
 
-    scm_verify_checksums_symbol = scm_permanent_object(scm_from_locale_symbol("verify-checksums"));
-    scm_fill_cache_symbol = scm_permanent_object(scm_from_locale_symbol("fill-cache"));
-    scm_snapshot_symbol = scm_permanent_object(scm_from_locale_symbol("snapshot"));
-    scm_iterate_upper_bound_symbol = scm_permanent_object(scm_from_locale_symbol("iterate-upper-bound"));
-    scm_iterate_lower_bound_symbol = scm_permanent_object(scm_from_locale_symbol("iterate-lower-bound"));
-    scm_read_tier_symbol = scm_permanent_object(scm_from_locale_symbol("read-tier"));
-    scm_tailing_symbol = scm_permanent_object(scm_from_locale_symbol("tailing"));
-    scm_readahead_size_symbol = scm_permanent_object(scm_from_locale_symbol("readahead-size"));
-    scm_prefix_same_as_start_symbol = scm_permanent_object(scm_from_locale_symbol("prefix-same-as-start"));
-    scm_pin_data_symbol = scm_permanent_object(scm_from_locale_symbol("pin_data"));
-    scm_total_order_seek_symbol = scm_permanent_object(scm_from_locale_symbol("total-order-seek"));
-    scm_max_skippable_internal_keys_symbol = scm_permanent_object(scm_from_locale_symbol("max-skippable-internal-keys"));
-    scm_background_purge_on_iterator_cleanup_symbol = scm_permanent_object(scm_from_locale_symbol("background-purge-on-iterator-cleanup"));
-    scm_ignore_range_deletions_symbol = scm_permanent_object(scm_from_locale_symbol("ignore-range-deletions"));
+    scm_verify_checksums_symbol = scm_permanent_object(scm_from_utf8_symbol("verify-checksums"));
+    scm_fill_cache_symbol = scm_permanent_object(scm_from_utf8_symbol("fill-cache"));
+    scm_snapshot_symbol = scm_permanent_object(scm_from_utf8_symbol("snapshot"));
+    scm_iterate_upper_bound_symbol = scm_permanent_object(scm_from_utf8_symbol("iterate-upper-bound"));
+    scm_iterate_lower_bound_symbol = scm_permanent_object(scm_from_utf8_symbol("iterate-lower-bound"));
+    scm_read_tier_symbol = scm_permanent_object(scm_from_utf8_symbol("read-tier"));
+    scm_tailing_symbol = scm_permanent_object(scm_from_utf8_symbol("tailing"));
+    scm_readahead_size_symbol = scm_permanent_object(scm_from_utf8_symbol("readahead-size"));
+    scm_prefix_same_as_start_symbol = scm_permanent_object(scm_from_utf8_symbol("prefix-same-as-start"));
+    scm_pin_data_symbol = scm_permanent_object(scm_from_utf8_symbol("pin_data"));
+    scm_total_order_seek_symbol = scm_permanent_object(scm_from_utf8_symbol("total-order-seek"));
+    scm_max_skippable_internal_keys_symbol = scm_permanent_object(scm_from_utf8_symbol("max-skippable-internal-keys"));
+    scm_background_purge_on_iterator_cleanup_symbol = scm_permanent_object(scm_from_utf8_symbol("background-purge-on-iterator-cleanup"));
+    scm_ignore_range_deletions_symbol = scm_permanent_object(scm_from_utf8_symbol("ignore-range-deletions"));
 
     default_rocksdb_readoptions = rocksdb_readoptions_create();
 

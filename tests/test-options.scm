@@ -99,7 +99,7 @@
                                                    (class-of (cdr x))))))
                                cf-list))))
     (receive (opts cf-list)             ;same, but with explicit cache creation
-        (load-latest-options tmp1 (rocksdb-cache-create-lru 65536))
+        (load-latest-options tmp1 (rocksdb-cache-create-lru 65536 'guile))
       (test-assert (and (instance? opts)
                         (equal? (class-of dbopts) (class-of opts))))
       (test-assert (and (list? cf-list)

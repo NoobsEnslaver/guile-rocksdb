@@ -24,11 +24,6 @@ struct rocksdb_options_t { Options rep; };
 struct rocksdb_env_t { Env* rep; bool is_default;};
 struct rocksdb_cache_t { std::shared_ptr<Cache> rep; };
 
-// SCM grocksdb_options_get_info_log_level(SCM scm_options){
-//     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_options);
-//     return scm_from_int(rocksdb_options_get_info_log_level((rocksdb_options_t*)scm_foreign_object_ref(scm_options, 0)));
-// }
-
 // spec: (string, rocksdb_cache_t?) -> (rocksdb_options_t, (list (string . rocksdb_options_t))) | (#f, string)
 SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
     ConfigOptions config_options;
