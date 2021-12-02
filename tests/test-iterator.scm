@@ -15,7 +15,6 @@
      (test-equal #f (rocksdb-iter-prev! iter))
      (test-equal #f (rocksdb-iter-get-error iter)))
 
-
     (test-group
      "basic iteration"
      (test-equal #t (rocksdb-iter-seek-to-first! iter))
@@ -23,7 +22,7 @@
           [succ #t (rocksdb-iter-next! iter)]
           [k (rocksdb-iter-key iter) (rocksdb-iter-key iter)]
           [v (rocksdb-iter-value iter) (rocksdb-iter-value iter)])
-         ((not (and succ k v)))
+         ((> i 10))
        (test-equal (make-u8vector 5 i) k)
        (test-equal (make-u8vector 10 i) v)
        (test-equal #f (rocksdb-iter-get-error iter))))
@@ -35,11 +34,12 @@
           [succ (rocksdb-iter-prev! iter) (rocksdb-iter-prev! iter)]
           [k (rocksdb-iter-key iter) (rocksdb-iter-key iter)]
           [v (rocksdb-iter-value iter) (rocksdb-iter-value iter)])
-         ((not (and succ k v)))
+         ((> i 0))
        (test-equal (make-u8vector 5 i) k)
        (test-equal (make-u8vector 10 i) v)
        (test-equal #f (rocksdb-iter-get-error iter))))
 
+    (set! iter (rocksdb-create-iterator db))
     (test-group
      "seek iteration"
      (test-equal #t (rocksdb-iter-seek! iter (make-u8vector 1 5)))
@@ -47,11 +47,12 @@
           [succ #t (rocksdb-iter-next! iter)]
           [k (rocksdb-iter-key iter) (rocksdb-iter-key iter)]
           [v (rocksdb-iter-value iter) (rocksdb-iter-value iter)])
-         ((not (and succ k v)))
+         ((> i 10))
        (test-equal (make-u8vector 5 i) k)
        (test-equal (make-u8vector 10 i) v)
        (test-equal #f (rocksdb-iter-get-error iter))))
 
+    (set! iter (rocksdb-create-iterator db))
     (test-group
      "backward seek iteration"
      (test-equal #t (rocksdb-iter-seek-for-prev! iter (make-u8vector 1 6)))
@@ -59,11 +60,12 @@
           [succ #t (rocksdb-iter-prev! iter)]
           [k (rocksdb-iter-key iter) (rocksdb-iter-key iter)]
           [v (rocksdb-iter-value iter) (rocksdb-iter-value iter)])
-         ((not (and succ k v)))
+         ((> i 0))
        (test-equal (make-u8vector 5 i) k)
        (test-equal (make-u8vector 10 i) v)
        (test-equal #f (rocksdb-iter-get-error iter))))
 
+    (set! iter (rocksdb-create-iterator db))
     (test-group
      "seek unexisting key"
      (test-equal #t (rocksdb-iter-seek! iter (make-bytevector 5 99)))
@@ -73,5 +75,5 @@
      (test-equal #f (rocksdb-iter-key iter))
      (test-equal #f (rocksdb-iter-value iter)))
 
-    ;; (rocksdb-iter-destroy! iter)
+    ;; TODO: refresh test
     )))

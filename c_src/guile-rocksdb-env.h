@@ -8,7 +8,7 @@ SCM grocksdb_create_mem_env(){
 };
 
 void grocksdb_env_destroy(SCM env){
-    SAFE_DESTROY_WITH(env, rocksdb_env_destroy);
+    MXSAFE_DESTROY_WITH(env, rocksdb_env_destroy);
 };
 
 // --------------- Init ----------------------------

@@ -16,3 +16,11 @@
 * TODO
   - guix.scm
   - maybe replace vector* functions with u8vector*?
+  - backup
+  - cache
+  - snapshot
+  - writebatch
+  - writeoptions
+  - transaction
+  - statistic
+  - cf

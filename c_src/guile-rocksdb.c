@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
-//#include <pthread.h>
+#include <pthread.h>
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
 #include "guile-rocksdb-options.h"
@@ -31,6 +31,8 @@ void* init_modules() {
 
 void init() {
     scm_with_guile(init_modules, NULL);
+
+    pthread_mutex_init(&destroy_mutex, NULL);
 
     /* DEBUG */
     display("Guile RocksDB driver loaded\n");

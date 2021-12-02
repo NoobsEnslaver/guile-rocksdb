@@ -9,7 +9,7 @@ SCM grocksdb_backup_engine_open(SCM options, SCM path){
     bk = rocksdb_backup_engine_open(scm_get_ref(options),
                                     scm_to_utf8_string(path), &err);
     if(err != NULL) scm_syserror(err);
-    return scm_make_foreign_object_2(scm_rocksdb_backup_engine_t, bk, (void *)false);
+    return scm_make_foreign_object_1(scm_rocksdb_backup_engine_t, bk);
 }
 
 SCM grocksdb_backup_engine_create_new_backup(SCM bk, SCM db){
@@ -49,13 +49,11 @@ SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_keep){
 
 SCM grocksdb_restore_options_create(){
     return scm_make_foreign_object_2(scm_rocksdb_restore_options_t,
-                                     rocksdb_restore_options_create(), (void *)false);
+                                     rocksdb_restore_options_create(), (void*)false);
 }
 
 void grocksdb_restore_options_destroy(SCM opt){
-    rocksdb_restore_options_t *ref = scm_foreign_object_ref(opt, 0);
-    bool consumed = scm_foreign_object_ref(opt, 1);
-    if(ref && !consumed) rocksdb_restore_options_destroy(ref);
+    MXSAFE_DESTROY_WITH(opt, rocksdb_restore_options_destroy);
 }
 
 SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
@@ -143,17 +141,11 @@ SCM grocksdb_backup_engine_info_number_files(SCM info, SCM index){
 }
 
 void grocksdb_backup_engine_info_destroy(SCM info){
-    scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
-    rocksdb_backup_engine_info_t *ref = scm_foreign_object_ref(info, 0);
-    if(ref) rocksdb_backup_engine_info_destroy(ref);
+    MXSAFE_DESTROY_WITH(info, rocksdb_backup_engine_info_destroy);
 }
 
-SCM grocksdb_backup_engine_close(SCM bk){
-    scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    rocksdb_backup_engine_t *ref = scm_foreign_object_ref(bk, 0);
-    bool closed = scm_foreign_object_ref(bk, 1);
-    if (ref && !closed) rocksdb_backup_engine_close(ref);
-    return SCM_UNSPECIFIED;
+void grocksdb_backup_engine_close(SCM bk){
+    MXSAFE_DESTROY_WITH(bk, rocksdb_backup_engine_close);
 }
 
 // --------------- Init -------------------------
@@ -161,9 +153,9 @@ void init_backup() {
     scm_rocksdb_restore_options_t = define_type_wrapper_2("rocksdb-restore-options", "already-consumed?",
                                                           grocksdb_restore_options_destroy);
     scm_rocksdb_backup_engine_info_t = define_type_wrapper("rocksdb-backup-engine-info",
-                                                           grocksdb_backup_engine_info_destroy); // const?
-    scm_rocksdb_backup_engine_t = define_type_wrapper_2("rocksdb-backup-engine", "already-closed?",
-                                                        grocksdb_backup_engine_close);
+                                                           grocksdb_backup_engine_info_destroy);
+    scm_rocksdb_backup_engine_t = define_type_wrapper("rocksdb-backup-engine",
+                                                      grocksdb_backup_engine_close);
 
     DEF("rocksdb-backup-engine-open", 2, &grocksdb_backup_engine_open);
     DEF("rocksdb-backup-engine-create-new-backup", 2, &grocksdb_backup_engine_create_new_backup);
@@ -177,5 +169,5 @@ void init_backup() {
     DEF("rocksdb-backup-engine-info-backup-id", 2, &grocksdb_backup_engine_info_backup_id);
     DEF("rocksdb-backup-engine-info-size", 2, &grocksdb_backup_engine_info_size);
     DEF("rocksdb-backup-engine-info-number-files", 2, &grocksdb_backup_engine_info_number_files);
-    DEF("rocksdb-backup-engine-close!", 1, &grocksdb_backup_engine_close);
+
 }

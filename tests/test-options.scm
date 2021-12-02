@@ -12,7 +12,11 @@
      (string-append
       (string-join
        (map (lambda (x)
-              (string-join (list (car x) (cdr x)) "=")) alist)
+              (define-values (k v) (car+cdr x))
+              (when (string-contains v ";")
+                (set! v (string-append "{" v "}")))
+              (string-join (list k v) "="))
+            alist)
        ";") ";"))
 
 
@@ -140,12 +144,12 @@
       (test-equal dbopts-str dbopts-str-2)
       (test-assert (alist=? tokens-1 tokens-2))
 
-      (define tokens-3 (assoc-set! tokens-2 "stats_dump_period_sec" "791"))
+      (define tokens-3 (assoc-set! tokens-2 "num_levels" "8"))
       (define dbopts-str-3 (alist->options-string tokens-3))
       (define dbopts-3 (string->rocksdb-options dbopts-str-3))
       (define tokens-4 (rocksdb-options-string->alist (rocksdb-options->string dbopts-3)))
       (test-assert (alist=? tokens-3 tokens-4))
-      (test-equal (assoc-ref tokens-4 "stats_dump_period_sec") "791")))
+      (test-equal (assoc-ref tokens-4 "num_levels") "8")))
 
    (test-group
     "options:rocksdb-options-create with keys"

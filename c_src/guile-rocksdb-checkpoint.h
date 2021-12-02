@@ -24,7 +24,7 @@ SCM grocksdb_checkpoint_create(SCM cp, SCM cp_dir, SCM log_size_for_flush){
 }
 
 void grocksdb_checkpoint_object_destroy(SCM cp){
-    SAFE_DESTROY_WITH(cp, rocksdb_checkpoint_object_destroy);
+    MXSAFE_DESTROY_WITH(cp, rocksdb_checkpoint_object_destroy);
 }
 
 // --------------- Init ----------------------------

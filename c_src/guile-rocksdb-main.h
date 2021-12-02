@@ -37,8 +37,7 @@ SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_log_file_
 }
 
 SCM grocksdb_close(SCM db){
-    scm_assert_foreign_object_type(scm_rocksdb_t, db);
-    SAFE_DESTROY_WITH(db, rocksdb_close);
+    MXSAFE_DESTROY_WITH(db, rocksdb_close);
     return SCM_UNSPECIFIED;
 }
 
@@ -87,7 +86,7 @@ SCM grocksdb_put_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_val, SCM scm_wr
 }
 
 SCM grocksdb_column_family_handle_destroy(SCM cf){
-    SAFE_DESTROY_WITH(cf, rocksdb_column_family_handle_destroy);
+    MXSAFE_DESTROY_WITH(cf, rocksdb_column_family_handle_destroy);
     return SCM_UNSPECIFIED;
 }
 
@@ -195,6 +194,11 @@ SCM grocksdb_get(SCM scm_db, SCM scm_key, SCM scm_readopt){
     return ret == NULL? SCM_BOOL_F : scm_take_u8vector((uint8_t *) ret, vallen);
 }
 
+SCM grocksdb_closed_p(SCM scm_db){
+    scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
+    return scm_from_bool(scm_foreign_object_ref(scm_db, 0) == NULL);
+}
+
 // --------------- Init ----------------------------
 void init_main() {
     scm_rocksdb_t = define_type_wrapper("rocksdb", grocksdb_close);
@@ -213,4 +217,6 @@ void init_main() {
     DEFOPT("rocksdb-delete-range-cf", 4, 1, grocksdb_delete_range_cf);
     DEFOPT("rocksdb-write", 2, 1, grocksdb_write);
     DEFOPT("rocksdb-get", 2, 1, grocksdb_get);
+
+    DEF("rocksdb-closed?", 1, grocksdb_closed_p);
 }

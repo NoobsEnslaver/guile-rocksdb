@@ -79,8 +79,7 @@ SCM grocksdb_options_create(SCM rest){
 }
 
 void grocksdb_options_destroy(SCM options){
-    if(!scm_foreign_object_ref(options, 1))
-        SAFE_DESTROY_WITH(options, rocksdb_options_destroy);
+    MXSAFE_DESTROY_WITH(options, if(!scm_foreign_object_ref(options, 1)) rocksdb_options_destroy);
 }
 
 SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_missing){

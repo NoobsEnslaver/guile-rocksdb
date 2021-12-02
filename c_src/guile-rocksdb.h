@@ -8,15 +8,23 @@
 #define BIND_REF_OR_DEFAULT(type, from, to, def) if(SCM_UNBNDP(from)) to = def; \
     else{scm_assert_foreign_object_type(type, from); to = scm_get_ref(from);}
 #define ASSERT_CONSUME_OPTIONS(opt) ASSERT_CONSUME(scm_rocksdb_options_t, opt)
-#define ASSERT_NULL(obj) if(obj == NULL) scm_syserror("using object after destruction")
 #define SAFE_DESTROY_WITH(obj, fun) if(scm_foreign_object_ref(obj, 0)){\
         fun(scm_foreign_object_ref(obj, 0));scm_foreign_object_set_x(obj, 0, NULL);}
+#define SAFE_DESTROY_WITH_2(obj, fun)                                       \
+    if (scm_foreign_object_ref(obj, 1) &&                                   \
+        scm_foreign_object_ref(scm_foreign_object_ref(obj, 1), 0)){         \
+        scm_foreign_object_set_x(obj, 1, NULL); SAFE_DESTROY_WITH(obj, fun);}
+#define MX(body) pthread_mutex_lock(&destroy_mutex); body; pthread_mutex_unlock(&destroy_mutex)
+#define MXSAFE_DESTROY_WITH(obj, fun) MX(SAFE_DESTROY_WITH(obj, fun))
+#define MXSAFE_DESTROY_WITH_2(obj, fun) MX(SAFE_DESTROY_WITH_2(obj, fun))
 
 void* scm_get_ref(SCM obj){
     void *ref = scm_foreign_object_ref(obj, 0);
-    if(ref == NULL) scm_syserror_msg(NULL, "using object after destruction", obj, EFAULT);
+    if(!ref) scm_syserror_msg(NULL, "using object after destruction", scm_list_1(obj), EFAULT);
     return ref;
 }
+
+static pthread_mutex_t destroy_mutex;
 
 // ------------------- Types -------------------------
 SCM scm_rocksdb_t;

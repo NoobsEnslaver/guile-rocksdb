@@ -105,12 +105,11 @@ SCM grocksdb_readoptions_to_alist(SCM scm_readoptions){
 }
 
 void grocksdb_readoptions_destroy(SCM scm_readoptions){
-    rocksdb_readoptions_t *ref = scm_foreign_object_ref(scm_readoptions, 0);
-    if(ref) rocksdb_readoptions_destroy(ref);
+    MXSAFE_DESTROY_WITH(scm_readoptions, rocksdb_readoptions_destroy);
 }
 // --------------- Init ----------------------------
 void init_readoptions() {
-    scm_rocksdb_readoptions_t = define_type_wrapper("rocksdb-readoptions", NULL/* grocksdb_readoptions_destroy */);
+    scm_rocksdb_readoptions_t = define_type_wrapper("rocksdb-readoptions", grocksdb_readoptions_destroy);
 
     scm_verify_checksums_symbol = scm_permanent_object(scm_from_locale_symbol("verify-checksums"));
     scm_fill_cache_symbol = scm_permanent_object(scm_from_locale_symbol("fill-cache"));
