@@ -19,7 +19,11 @@ static SCM k_cache_index_and_filter_blocks;
 static SCM k_cache_index_and_filter_blocks_with_high_priority;
 static SCM k_pin_l0_filter_and_index_blocks_in_cache;
 static SCM k_pin_top_level_index_and_filter;
-static SCM k_block_based_table_factory;
+static SCM k_hash_ratio;
+static SCM k_max_search_depth;
+static SCM k_identity_as_first_hash;
+static SCM k_use_module_hash;
+static SCM k_cuckoo_block_size;
 
 static SCM scm_bloom_symbol;
 static SCM scm_bloom_full_symbol;
@@ -173,6 +177,40 @@ void grocksdb_block_based_options_destroy(SCM bbopts){
     MXSAFE_DESTROY_WITH(bbopts, if(!scm_foreign_object_ref(bbopts, 1)) rocksdb_options_destroy);
 }
 
+SCM grocksdb_cuckoo_options_create(SCM rest){
+    SCM hash_ratio = SCM_UNDEFINED;
+    SCM max_search_depth = SCM_UNDEFINED;
+    SCM identity_as_first_hash = SCM_UNDEFINED;
+    SCM use_module_hash = SCM_UNDEFINED;
+    SCM cuckoo_block_size = SCM_UNDEFINED;
+    rocksdb_cuckoo_table_options_t* cuckopts = rocksdb_cuckoo_options_create();
+
+    scm_c_bind_keyword_arguments("rocksdb-cuckoo-options-create", rest, 0,
+                                 k_hash_ratio, &hash_ratio,
+                                 k_max_search_depth, &max_search_depth,
+                                 k_identity_as_first_hash, &identity_as_first_hash,
+                                 k_use_module_hash, &use_module_hash,
+                                 k_cuckoo_block_size, &cuckoo_block_size,
+                                 SCM_UNDEFINED);
+
+    if(!SCM_UNBNDP(hash_ratio))
+        rocksdb_cuckoo_options_set_hash_ratio(cuckopts, scm_to_double(hash_ratio));
+    if(!SCM_UNBNDP(max_search_depth))
+        rocksdb_cuckoo_options_set_max_search_depth(cuckopts, scm_to_size_t(max_search_depth));
+    if(!SCM_UNBNDP(cuckoo_block_size))
+        rocksdb_cuckoo_options_set_cuckoo_block_size(cuckopts, scm_to_size_t(cuckoo_block_size));
+    if(!SCM_UNBNDP(identity_as_first_hash))
+        rocksdb_cuckoo_options_set_identity_as_first_hash(cuckopts, scm_is_true(identity_as_first_hash));
+    if(!SCM_UNBNDP(use_module_hash))
+        rocksdb_cuckoo_options_set_use_module_hash(cuckopts, scm_is_true(use_module_hash));
+
+    return scm_make_foreign_object_2(scm_rocksdb_cuckoo_options_t, cuckopts, false);
+}
+
+void grocksdb_cuckoo_options_destroy(SCM cuckopts){
+    MXSAFE_DESTROY_WITH(cuckopts, if(!scm_foreign_object_ref(cuckopts, 1)) rocksdb_cuckoo_options_destroy);
+}
+
 void init_table_options() {
     k_block_size = scm_from_utf8_keyword("block-size");
     k_block_size_deviation = scm_from_utf8_keyword("block-size-deviation");
@@ -197,6 +235,11 @@ void init_table_options() {
     k_pin_l0_filter_and_index_blocks_in_cache =
         scm_from_utf8_keyword("pin-l0-filter-and-index-blocks-in-cache");
     k_pin_top_level_index_and_filter = scm_from_utf8_keyword("pin-top-level-index-and-filter");
+    k_hash_ratio = scm_from_utf8_keyword("hash-ratio");
+    k_max_search_depth = scm_from_utf8_keyword("max-search-depth");
+    k_identity_as_first_hash = scm_from_utf8_keyword("identity-as-first-hash");
+    k_use_module_hash = scm_from_utf8_keyword("use-module-hash");
+    k_cuckoo_block_size = scm_from_utf8_keyword("cuckoo-block-size");
 
     scm_bloom_symbol = scm_permanent_object(scm_from_utf8_symbol("bloom"));
     scm_bloom_full_symbol = scm_permanent_object(scm_from_utf8_symbol("bloom-full"));
@@ -209,6 +252,9 @@ void init_table_options() {
 
     scm_rocksdb_block_based_options_t =
         define_type_wrapper_2("rocksdb-block-based-options", "consumed?", grocksdb_block_based_options_destroy);
+    scm_rocksdb_cuckoo_options_t =
+        define_type_wrapper_2("rocksdb-cuckoo-options", "consumed?", grocksdb_cuckoo_options_destroy);
 
     DEFREST("rocksdb-block-based-options-create", grocksdb_block_based_options_create);
+    DEFREST("rocksdb-cuckoo-options-create", grocksdb_cuckoo_options_create);
 }

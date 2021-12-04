@@ -42,6 +42,7 @@ SCM scm_rocksdb_cache_t;
 SCM scm_rocksdb_iterator_t;
 SCM scm_rocksdb_snapshot_t;
 SCM scm_rocksdb_block_based_options_t;
+SCM scm_rocksdb_cuckoo_options_t;
 
 // ------------------- Helpers ------------------------
 void* scm_copy_u8vector(const void *src, size_t len){

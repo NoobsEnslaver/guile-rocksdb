@@ -206,4 +206,19 @@
       (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
       (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
       (test-assert (not (rocksdb-closed? db)))))
+
+   (test-group
+    "options:rocksdb-options-create + rocksdb-cuckoo-options-create"
+    (let* ([cuckopts (rocksdb-cuckoo-options-create :hash-ratio 123.321
+                                                    :max-search-depth 5
+                                                    :cuckoo-block-size 123
+                                                    :identity-as-first-hash #t
+                                                    :use-module-hash #t)]
+           [dbopts (rocksdb-options-create :table-factory cuckopts :create-if-missing #t)]
+           [db (rocksdb-open dbopts (make-tmp-dir))]
+           [dbopts-alist (options->alist dbopts)])
+      (test-assert (rocksdb-options? dbopts))
+      (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
+      (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
+      (test-assert (not (rocksdb-closed? db)))))
    ))

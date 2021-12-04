@@ -85,8 +85,10 @@ SCM grocksdb_options_create(SCM rest){
             rocksdb_options_set_block_based_table_factory(opts, scm_get_ref(table_factory));
         }
 
-        // else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_table_options_t))
-        //     rocksdb_options_set_cuckoo_table_factory(opts, scm_get_ref(table_factory));
+        else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_options_t)){
+            ASSERT_CONSUME(scm_rocksdb_cuckoo_options_t, table_factory);
+            rocksdb_options_set_cuckoo_table_factory(opts, scm_get_ref(table_factory));
+        }
         // else if(SCM_IS_A_P(table_factory, scm_rocksdb_plain_table_options_t))
         //     rocksdb_options_set_cuckoo_table_factory(opts, scm_get_ref(table_factory));
         else
