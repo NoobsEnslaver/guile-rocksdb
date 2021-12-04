@@ -1,7 +1,7 @@
 // --------------- Wrapers -------------------------
 SCM grocksdb_open(SCM options, SCM db_path){
     ASSERT_CONSUME_OPTIONS(options);
-    SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb_open", "string");
+    SCM_ASSERT_TYPE(scm_is_string(db_path), db_path, SCM_ARG2, "rocksdb_open", "string");
 
     char *err = NULL;
     rocksdb_t *db = rocksdb_open(scm_foreign_object_ref(options, 0),
@@ -13,8 +13,8 @@ SCM grocksdb_open(SCM options, SCM db_path){
 
 SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
     ASSERT_CONSUME_OPTIONS(options);
-    SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb_open_with_ttl", "string");
-    SCM_ASSERT_TYPE(scm_integer_p(ttl), ttl, SCM_ARG3, "rocksdb_open_with_ttl", "integer");
+    SCM_ASSERT_TYPE(scm_is_string(db_path), db_path, SCM_ARG2, "rocksdb_open_with_ttl", "string");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(ttl), ttl, SCM_ARG3, "rocksdb_open_with_ttl", "exact integer");
 
     char *err = NULL;
     rocksdb_t *db = rocksdb_open_with_ttl(scm_foreign_object_ref(options, 0),
@@ -26,7 +26,7 @@ SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
 
 SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_log_file_exist){
     ASSERT_CONSUME_OPTIONS(options);
-    SCM_ASSERT_TYPE(scm_string_p(db_path), db_path, SCM_ARG2, "rocksdb-open-for-read-only", "string");
+    SCM_ASSERT_TYPE(scm_is_string(db_path), db_path, SCM_ARG2, "rocksdb-open-for-read-only", "string");
 
     char *err = NULL;
     rocksdb_t *db = rocksdb_open_for_read_only(scm_foreign_object_ref(options, 0),
@@ -47,8 +47,8 @@ SCM grocksdb_put(SCM scm_db, SCM scm_key, SCM scm_val, SCM scm_writeopt){
     rocksdb_writeoptions_t *wopts;
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-put", "bytevector");
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_val), scm_val, SCM_ARG3, "rocksdb-put", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_key), scm_key, SCM_ARG2, "rocksdb-put", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_val), scm_val, SCM_ARG3, "rocksdb-put", "bytevector");
     BIND_REF_OR_DEFAULT(scm_rocksdb_writeoptions_t, scm_writeopt, wopts, default_rocksdb_writeoptions);
 
     rocksdb_put(scm_get_ref(scm_db),
@@ -68,8 +68,8 @@ SCM grocksdb_put_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_val, SCM scm_wr
     rocksdb_writeoptions_t *wopts;
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG3, "rocksdb_put_cf", "bytevector");
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_val), scm_val, SCM_ARG4, "rocksdb_put_cf", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_key), scm_key, SCM_ARG3, "rocksdb_put_cf", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_val), scm_val, SCM_ARG4, "rocksdb_put_cf", "bytevector");
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
     BIND_REF_OR_DEFAULT(scm_rocksdb_writeoptions_t, scm_writeopt, wopts, default_rocksdb_writeoptions);
 
@@ -96,7 +96,7 @@ SCM grocksdb_create_column_family(SCM scm_db, SCM scm_options, SCM scm_cf_name){
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     ASSERT_CONSUME_OPTIONS(scm_options);
-    SCM_ASSERT_TYPE(scm_string_p(scm_cf_name), scm_cf_name, SCM_ARG3, "rocksdb-create-column-family", "string");
+    SCM_ASSERT_TYPE(scm_is_string(scm_cf_name), scm_cf_name, SCM_ARG3, "rocksdb-create-column-family", "string");
 
     h = rocksdb_create_column_family(scm_get_ref(scm_db),
                                      scm_get_ref(scm_options),
@@ -109,7 +109,7 @@ SCM grocksdb_delete(SCM scm_db, SCM scm_key, SCM scm_writeopt){
     rocksdb_writeoptions_t *wopts;
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-delete", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_key), scm_key, SCM_ARG2, "rocksdb-delete", "bytevector");
     BIND_REF_OR_DEFAULT(scm_rocksdb_writeoptions_t, scm_writeopt, wopts, default_rocksdb_writeoptions);
 
     rocksdb_delete(scm_get_ref(scm_db),
@@ -126,7 +126,7 @@ SCM grocksdb_delete_cf(SCM scm_db, SCM scm_cf, SCM scm_key, SCM scm_writeopt){
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG3, "rocksdb-delete-cf", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_key), scm_key, SCM_ARG3, "rocksdb-delete-cf", "bytevector");
     BIND_REF_OR_DEFAULT(scm_rocksdb_writeoptions_t, scm_writeopt, wopts, default_rocksdb_writeoptions);
 
     rocksdb_delete_cf(scm_get_ref(scm_db),
@@ -144,9 +144,9 @@ SCM grocksdb_delete_range_cf(SCM scm_db, SCM scm_cf, SCM scm_start_key, SCM scm_
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     scm_assert_foreign_object_type(scm_rocksdb_column_family_handle_t, scm_cf);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_start_key), scm_start_key, SCM_ARG3,
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_start_key), scm_start_key, SCM_ARG3,
                     "rocksdb-delete-range-cf", "bytevector");
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_end_key), scm_end_key, SCM_ARG4,
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_end_key), scm_end_key, SCM_ARG4,
                     "rocksdb-delete-range-cf", "bytevector");
     BIND_REF_OR_DEFAULT(scm_rocksdb_writeoptions_t, scm_writeopt, wopts, default_rocksdb_writeoptions);
 
@@ -180,7 +180,7 @@ SCM grocksdb_get(SCM scm_db, SCM scm_key, SCM scm_readopt){
     rocksdb_readoptions_t *ropts;
 
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
-    SCM_ASSERT_TYPE(scm_bytevector_p(scm_key), scm_key, SCM_ARG2, "rocksdb-get", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(scm_key), scm_key, SCM_ARG2, "rocksdb-get", "bytevector");
     BIND_REF_OR_DEFAULT(scm_rocksdb_readoptions_t, scm_readopt, ropts, default_rocksdb_readoptions);
 
     char *ret = rocksdb_get(scm_get_ref(scm_db),

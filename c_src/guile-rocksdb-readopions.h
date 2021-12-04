@@ -19,9 +19,9 @@ static rocksdb_readoptions_t* default_rocksdb_readoptions;
 SCM grocksdb_readoptions_create(SCM alist){
     rocksdb_readoptions_t *opts = rocksdb_readoptions_create();
     if(!SCM_UNBNDP(alist)){
-        SCM_ASSERT_TYPE(scm_list_p(alist), alist, SCM_ARG1, "rocksdb-readoptions-create", "alist");
+        SCM_ASSERT_TYPE(scm_is_true(scm_list_p(alist)), alist, SCM_ARG1, "rocksdb-readoptions-create", "alist");
         SCM pair, key, val;
-        while(!scm_null_p(alist)){
+        while(!scm_is_null(alist)){
             pair = scm_car(alist);
             alist = scm_cdr(alist);
             key = scm_car(pair);
@@ -34,26 +34,26 @@ SCM grocksdb_readoptions_create(SCM alist){
                 scm_assert_foreign_object_type(scm_rocksdb_snapshot_t, val);
                 rocksdb_readoptions_set_snapshot(opts, scm_foreign_object_ref(val, 0));}
             else if(scm_is_eq(key, scm_iterate_upper_bound_symbol)){
-                SCM_ASSERT_TYPE(scm_string_p(val), val, SCM_ARG1,
-                                "rocksdb_readoptions.iterate_upper_bound", "string");
+                SCM_ASSERT_TYPE(scm_is_string(val), val, SCM_ARG1,
+                                "rocksdb-readoptions-create.iterate_upper_bound", "string");
                 size_t len;
                 char *str = scm_to_utf8_stringn(val, &len);
                 rocksdb_readoptions_set_iterate_upper_bound(opts, str, len);}
             else if(scm_is_eq(key, scm_iterate_lower_bound_symbol)){
-                SCM_ASSERT_TYPE(scm_string_p(val), val, SCM_ARG1,
-                                "rocksdb_readoptions.iterate_lower_bound", "string");
+                SCM_ASSERT_TYPE(scm_is_string(val), val, SCM_ARG1,
+                                "rocksdb-readoptions-create.iterate_lower_bound", "string");
                 size_t len;
                 char *str = scm_to_utf8_stringn(val, &len);
                 rocksdb_readoptions_set_iterate_lower_bound(opts, str, len);}
             else if(scm_is_eq(key, scm_read_tier_symbol)){
-                SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
-                                "rocksdb_readoptions.read_tier", "integer");
+                SCM_ASSERT_TYPE(scm_is_exact_integer(val), val, SCM_ARG1,
+                                "rocksdb-readoptions-create.read_tier", "exact integer");
                 rocksdb_readoptions_set_read_tier(opts, scm_to_int(val));}
             else if(scm_is_eq(key, scm_tailing_symbol))
                 rocksdb_readoptions_set_tailing(opts, scm_is_true(val));
             else if(scm_is_eq(key, scm_readahead_size_symbol)){
-                SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
-                                "rocksdb_readoptions.readahead_size", "integer");
+                SCM_ASSERT_TYPE(scm_is_exact_integer(val), val, SCM_ARG1,
+                                "rocksdb-readoptions-create.readahead_size", "exact integer");
                 rocksdb_readoptions_set_readahead_size(opts, scm_to_int(val));}
             else if(scm_is_eq(key, scm_prefix_same_as_start_symbol))
                 rocksdb_readoptions_set_prefix_same_as_start(opts, scm_is_true(val));
@@ -62,15 +62,15 @@ SCM grocksdb_readoptions_create(SCM alist){
             else if(scm_is_eq(key, scm_total_order_seek_symbol))
                 rocksdb_readoptions_set_total_order_seek(opts, scm_is_true(val));
             else if(scm_is_eq(key, scm_max_skippable_internal_keys_symbol)){
-                SCM_ASSERT_TYPE(scm_integer_p(val), val, SCM_ARG1,
-                                "rocksdb_readoptions.max_skippable_internal_keys", "integer");
+                SCM_ASSERT_TYPE(scm_is_exact_integer(val), val, SCM_ARG1,
+                                "rocksdb-readoptions-create.max_skippable_internal_keys", "exact integer");
                 rocksdb_readoptions_set_max_skippable_internal_keys(opts, scm_to_int(val));}
             else if(scm_is_eq(key, scm_background_purge_on_iterator_cleanup_symbol))
                 rocksdb_readoptions_set_background_purge_on_iterator_cleanup(opts, scm_is_true(val));
             else if(scm_is_eq(key, scm_ignore_range_deletions_symbol))
                 rocksdb_readoptions_set_ignore_range_deletions(opts, scm_is_true(val));
             else
-                scm_wrong_type_arg_msg("rocksdb-readoptions-create", SCM_ARG1, key, "unknown key");
+                scm_wrong_type_arg("rocksdb-readoptions-create", SCM_ARG1, key);
         }
     }
     return scm_make_foreign_object_1(scm_rocksdb_readoptions_t, opts);

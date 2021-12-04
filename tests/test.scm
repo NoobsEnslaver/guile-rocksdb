@@ -2,6 +2,7 @@
 
 (use-modules (rocksdb)
              (rocksdb options)
+             (rocksdb table-options)
              (rocksdb cache)
              (rocksdb env)
              (rocksdb writeoptions)
@@ -17,7 +18,7 @@
 
 (define cleanup-strategy 'purge)    ;keep-logs | purge | none
 (set! test-log-to-file "guile-rocksdb.log")
-(define repeat 50)
+(define repeat 10)
 
 (define (test-not-equal a b)
   (test-assert (not (equal? a b))))

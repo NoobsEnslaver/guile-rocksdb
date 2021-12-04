@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include "rocksdb/c.h"
 #include "guile-rocksdb.h"
+#include "guile-rocksdb-cache.h"
+#include "guile-rocksdb-table-options.h"
 #include "guile-rocksdb-options.h"
 #include "guile-rocksdb-writeopions.h"
 #include "guile-rocksdb-readopions.h"
@@ -12,7 +14,6 @@
 #include "guile-rocksdb-main.h"
 #include "guile-rocksdb-backup.h"
 #include "guile-rocksdb-checkpoint.h"
-#include "guile-rocksdb-cache.h"
 #include "guile-rocksdb-env.h"
 #include "guile-rocksdb-iterator.h"
 
@@ -20,6 +21,7 @@ void* init_modules() {
     scm_c_define_module("rocksdb", init_main, NULL);
     scm_c_define_module("rocksdb backup", init_backup, NULL);
     scm_c_define_module("rocksdb options", init_options, NULL);
+    scm_c_define_module("rocksdb table-options", init_table_options, NULL);
     scm_c_define_module("rocksdb checkpoint", init_checkpoint, NULL);
     scm_c_define_module("rocksdb writeoptions", init_writeoptions, NULL);
     scm_c_define_module("rocksdb readoptions", init_readoptions, NULL);

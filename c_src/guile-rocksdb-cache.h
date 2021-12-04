@@ -5,7 +5,7 @@ static SCM scm_guile_sym;
 extern rocksdb_memory_allocator_t* rocksdb_guile_allocator_create();
 // --------------- Wrapers -------------------------
 SCM grocksdb_cache_create_lru(SCM capacity, SCM allocator){
-    SCM_ASSERT_TYPE(scm_integer_p(capacity), capacity, SCM_ARG1, "rocksdb_cache_create_lru", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(capacity), capacity, SCM_ARG1, "rocksdb_cache_create_lru", "exact integer");
     size_t cap = scm_to_size_t(capacity);
 
     if (SCM_UNBNDP(allocator))
@@ -24,19 +24,19 @@ SCM grocksdb_cache_create_lru(SCM capacity, SCM allocator){
         //TODO: not tested
         rocksdb_lru_cache_options_set_memory_allocator(opts, rocksdb_guile_allocator_create());
     } else if(!scm_is_eq(allocator, scm_default_sym)){
-        scm_wrong_type_arg_msg("rocksdb-cache-create-lru", SCM_ARG2, allocator, "unknown allocator");
+        scm_wrong_type_arg_msg("rocksdb-cache-create-lru", SCM_ARG2, allocator, "allocator name");
     }
 
-    return scm_make_foreign_object_1(scm_rocksdb_cache_t, rocksdb_cache_create_lru_opts(opts));
+    return scm_make_foreign_object_2(scm_rocksdb_cache_t, rocksdb_cache_create_lru_opts(opts), NULL);
 };
 
 void grocksdb_cache_destroy(SCM cache){
-    MXSAFE_DESTROY_WITH(cache, rocksdb_cache_destroy);
+    MXSAFE_DESTROY_WITH(cache, if(!scm_foreign_object_ref(cache, 1)) rocksdb_cache_destroy);
 };
 
 // --------------- Init ----------------------------
 void init_cache() {
-    scm_rocksdb_cache_t = define_type_wrapper("rocksdb-cache", grocksdb_cache_destroy);
+    scm_rocksdb_cache_t = define_type_wrapper_2("rocksdb-cache", "consumed?", grocksdb_cache_destroy);
 
     scm_default_sym = scm_permanent_object(scm_from_utf8_symbol("default"));
     scm_jemalloc_sym = scm_permanent_object(scm_from_utf8_symbol("jemalloc"));

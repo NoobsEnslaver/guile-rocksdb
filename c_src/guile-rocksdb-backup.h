@@ -2,7 +2,7 @@
 
 SCM grocksdb_backup_engine_open(SCM options, SCM path){
     ASSERT_CONSUME_OPTIONS(options);
-    SCM_ASSERT_TYPE(scm_string_p(path), path, SCM_ARG2, "rocksdb_backup_engine_open", "string");
+    SCM_ASSERT_TYPE(scm_is_string(path), path, SCM_ARG2, "rocksdb_backup_engine_open", "string");
 
     char *err = NULL;
     rocksdb_backup_engine_t* bk;
@@ -37,8 +37,8 @@ SCM grocksdb_backup_engine_create_new_backup_flush(SCM bk, SCM db, SCM flush_bef
 
 SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_keep){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    SCM_ASSERT_TYPE(scm_integer_p(num_backups_to_keep), num_backups_to_keep, SCM_ARG2,
-                    "rocksdb_backup_engine_purge_old_backups", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(num_backups_to_keep), num_backups_to_keep, SCM_ARG2,
+                    "rocksdb_backup_engine_purge_old_backups", "exact integer");
 
     char *err = NULL;
     rocksdb_backup_engine_purge_old_backups(scm_get_ref(bk),
@@ -58,7 +58,7 @@ void grocksdb_restore_options_destroy(SCM opt){
 
 SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
     scm_assert_foreign_object_type(scm_rocksdb_restore_options_t, options);
-    SCM_ASSERT_TYPE(scm_integer_p(n), n, SCM_ARG2, "rocksdb_restore_options_set_keep_log_files", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(n), n, SCM_ARG2, "rocksdb_restore_options_set_keep_log_files", "exact integer");
 
     rocksdb_restore_options_set_keep_log_files(scm_get_ref(options), scm_to_size_t(n));
     return SCM_UNSPECIFIED;
@@ -66,7 +66,7 @@ SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
 
 SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    SCM_ASSERT_TYPE(scm_integer_p(backup_id), backup_id, SCM_ARG2, "rocksdb_backup_engine_verify_backup", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(backup_id), backup_id, SCM_ARG2, "rocksdb_backup_engine_verify_backup", "exact integer");
 
     char *err = NULL;
     rocksdb_backup_engine_verify_backup(scm_get_ref(bk), scm_to_size_t(backup_id), &err);
@@ -76,9 +76,9 @@ SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
 
 SCM grocksdb_backup_engine_restore_db_from_latest_backup(SCM bk, SCM db_dir, SCM wal_dir, SCM opt){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_t, bk);
-    SCM_ASSERT_TYPE(scm_string_p(db_dir), db_dir, SCM_ARG2,
+    SCM_ASSERT_TYPE(scm_is_string(db_dir), db_dir, SCM_ARG2,
                     "rocksdb_backup_engine_restore_db_from_latest_backup", "string");
-    SCM_ASSERT_TYPE(scm_string_p(wal_dir), wal_dir, SCM_ARG3,
+    SCM_ASSERT_TYPE(scm_is_string(wal_dir), wal_dir, SCM_ARG3,
                     "rocksdb_backup_engine_restore_db_from_latest_backup", "string");
     ASSERT_CONSUME(scm_rocksdb_restore_options_t, opt);
 
@@ -106,7 +106,7 @@ SCM grocksdb_backup_engine_info_count(SCM info){
 
 SCM grocksdb_backup_engine_info_timestamp(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
-    SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_timestamp", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(index), index, SCM_ARG2, "rocksdb_backup_engine_info_timestamp", "exact integer");
 
     int64_t result = rocksdb_backup_engine_info_timestamp(scm_get_ref(info),
                                                           scm_to_size_t(index));
@@ -115,7 +115,7 @@ SCM grocksdb_backup_engine_info_timestamp(SCM info, SCM index){
 
 SCM grocksdb_backup_engine_info_backup_id(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
-    SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_backup_id", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(index), index, SCM_ARG2, "rocksdb_backup_engine_info_backup_id", "exact integer");
 
     uint32_t result = rocksdb_backup_engine_info_backup_id(scm_get_ref(info),
                                                            scm_to_size_t(index));
@@ -124,7 +124,7 @@ SCM grocksdb_backup_engine_info_backup_id(SCM info, SCM index){
 
 SCM grocksdb_backup_engine_info_size(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
-    SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_size", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(index), index, SCM_ARG2, "rocksdb_backup_engine_info_size", "exact integer");
 
     uint64_t result = rocksdb_backup_engine_info_size(scm_get_ref(info),
                                                       scm_to_size_t(index));
@@ -133,7 +133,7 @@ SCM grocksdb_backup_engine_info_size(SCM info, SCM index){
 
 SCM grocksdb_backup_engine_info_number_files(SCM info, SCM index){
     scm_assert_foreign_object_type(scm_rocksdb_backup_engine_info_t, info);
-    SCM_ASSERT_TYPE(scm_integer_p(index), index, SCM_ARG2, "rocksdb_backup_engine_info_number_files", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(index), index, SCM_ARG2, "rocksdb_backup_engine_info_number_files", "exact integer");
 
     uint32_t result = rocksdb_backup_engine_info_number_files(scm_get_ref(info),
                                                               scm_to_size_t(index));

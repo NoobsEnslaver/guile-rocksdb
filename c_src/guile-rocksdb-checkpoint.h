@@ -10,9 +10,9 @@ SCM grocksdb_checkpoint_object_create(SCM db){
 
 SCM grocksdb_checkpoint_create(SCM cp, SCM cp_dir, SCM log_size_for_flush){
     scm_assert_foreign_object_type(scm_rocksdb_checkpoint_t, cp);
-    SCM_ASSERT_TYPE(scm_string_p(cp_dir), cp_dir, SCM_ARG2, "rocksdb-checkpoint-create", "string");
-    SCM_ASSERT_TYPE(scm_integer_p(log_size_for_flush), log_size_for_flush,
-                    SCM_ARG3, "rocksdb-checkpoint-create", "integer");
+    SCM_ASSERT_TYPE(scm_is_string(cp_dir), cp_dir, SCM_ARG2, "rocksdb-checkpoint-create", "string");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(log_size_for_flush), log_size_for_flush,
+                    SCM_ARG3, "rocksdb-checkpoint-create", "exact integer");
 
     char *err = NULL;
     rocksdb_checkpoint_create(scm_get_ref(cp),

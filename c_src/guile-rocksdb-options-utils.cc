@@ -31,7 +31,7 @@ SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
     vector<ColumnFamilyDescriptor> *cpp_cf_descs_vec = new vector<ColumnFamilyDescriptor>; // FIXME: purge?
     SCM result[2] = {SCM_BOOL_F, SCM_BOOL_F};
 
-    SCM_ASSERT_TYPE(scm_string_p(scm_options_file_name), scm_options_file_name, SCM_ARG1,
+    SCM_ASSERT_TYPE(scm_is_string(scm_options_file_name), scm_options_file_name, SCM_ARG1,
                     "load-options-from-file", "string");
     std::string cpp_options_file_name = std::string(scm_to_utf8_string(scm_options_file_name));
 
@@ -41,6 +41,7 @@ SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
                                 cpp_options, cpp_cf_descs_vec);
     } else {
         scm_assert_foreign_object_type(scm_rocksdb_cache_t, scm_cache);
+        scm_foreign_object_set_x(scm_cache, 1, (void *)true);
         rocksdb_cache_t* c_cache = (rocksdb_cache_t*)scm_get_ref(scm_cache);
         std::shared_ptr<Cache> cpp_cache = c_cache->rep;
         s = LoadOptionsFromFile(config_options, cpp_options_file_name,
@@ -68,7 +69,7 @@ SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
 
 // spec: (string, rocksdb_env_t?) -> (string, undefined) | (#f, string)
 SCM gget_latest_options_filename(SCM scm_dbpath, SCM scm_env){
-    SCM_ASSERT_TYPE(scm_string_p(scm_dbpath), scm_dbpath, SCM_ARG1,
+    SCM_ASSERT_TYPE(scm_is_string(scm_dbpath), scm_dbpath, SCM_ARG1,
                     "get-latest-options-filename", "string");
     const std::string cpp_dbpath = std::string(scm_to_utf8_string(scm_dbpath));
     rocksdb_env_t* c_env;
@@ -100,7 +101,7 @@ SCM gload_latest_options(SCM scm_dbpath, SCM scm_cache){
     vector<ColumnFamilyDescriptor> *cpp_cf_descs_vec = new vector<ColumnFamilyDescriptor>; //FIXME: purge?
     SCM result[2] = {SCM_BOOL_F, SCM_BOOL_F};
 
-    SCM_ASSERT_TYPE(scm_string_p(scm_dbpath), scm_dbpath, SCM_ARG1,
+    SCM_ASSERT_TYPE(scm_is_string(scm_dbpath), scm_dbpath, SCM_ARG1,
                     "load-latest-options", "string");
     std::string cpp_dbpath = std::string(scm_to_utf8_string(scm_dbpath));
 
@@ -141,7 +142,7 @@ SCM gget_options_from_string(SCM scm_string, SCM scm_base_opts){
     rocksdb_options_t *c_base_options;
     SCM result[2] = {SCM_BOOL_F, SCM_BOOL_F};
 
-    SCM_ASSERT_TYPE(scm_string_p(scm_string), scm_string, SCM_ARG1,
+    SCM_ASSERT_TYPE(scm_is_string(scm_string), scm_string, SCM_ARG1,
                     "string->rocksdb-options", "string");
     std::string cpp_string = std::string(scm_to_utf8_string(scm_string));
 
@@ -171,7 +172,7 @@ SCM gget_string_from_dboptions(SCM scm_db_opts, SCM scm_delim){
     ConfigOptions config_options;
     scm_assert_foreign_object_type(scm_rocksdb_options_t, scm_db_opts);
     if (!SCM_UNBNDP(scm_delim)){
-        SCM_ASSERT_TYPE(scm_string_p(scm_delim), scm_delim, SCM_ARG2,
+        SCM_ASSERT_TYPE(scm_is_string(scm_delim), scm_delim, SCM_ARG2,
                         "rocksdb-options->string", "string");
         config_options.delimiter = std::string(scm_to_utf8_string(scm_delim));
     }
@@ -195,7 +196,7 @@ SCM gget_string_from_dboptions(SCM scm_db_opts, SCM scm_delim){
 
 // spec: (string) -> (list (string . string)) | (#f, string)
 SCM grocksdb_options_string_to_alist(SCM scm_string_db_opts){
-    SCM_ASSERT_TYPE(scm_string_p(scm_string_db_opts), scm_string_db_opts, SCM_ARG1,
+    SCM_ASSERT_TYPE(scm_is_string(scm_string_db_opts), scm_string_db_opts, SCM_ARG1,
                         "rocksdb-options-string->alist", "string");
     std::string opts_str = std::string(scm_to_utf8_string(scm_string_db_opts));
     std::unordered_map<std::string, std::string> opts_map;

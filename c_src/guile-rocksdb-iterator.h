@@ -57,7 +57,7 @@ SCM grocksdb_iter_prev(SCM scm_iterator){
 
 SCM grocksdb_iter_seek(SCM scm_iterator, SCM key){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
-    SCM_ASSERT_TYPE(scm_bytevector_p(key), key, SCM_ARG2, "rocksdb-iter-seek!", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(key), key, SCM_ARG2, "rocksdb-iter-seek!", "bytevector");
     rocksdb_iter_seek(scm_foreign_object_ref(scm_iterator, 0),
                       SCM_BYTEVECTOR_CONTENTS(key),
                       SCM_BYTEVECTOR_LENGTH(key));
@@ -66,7 +66,7 @@ SCM grocksdb_iter_seek(SCM scm_iterator, SCM key){
 
 SCM grocksdb_iter_seek_for_prev(SCM scm_iterator, SCM key){
     scm_assert_foreign_object_type(scm_rocksdb_iterator_t, scm_iterator);
-    SCM_ASSERT_TYPE(scm_bytevector_p(key), key, SCM_ARG2, "rocksdb-iter-seek-for-prev!", "bytevector");
+    SCM_ASSERT_TYPE(scm_is_bytevector(key), key, SCM_ARG2, "rocksdb-iter-seek-for-prev!", "bytevector");
     rocksdb_iter_seek_for_prev(scm_foreign_object_ref(scm_iterator, 0),
                                SCM_BYTEVECTOR_CONTENTS(key),
                                SCM_BYTEVECTOR_LENGTH(key));

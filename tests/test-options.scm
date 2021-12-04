@@ -175,4 +175,35 @@
       (test-equal "11" (assoc-ref dbopts-alist "max_subcompactions"))
       (test-equal "12" (assoc-ref dbopts-alist "max_background_jobs"))
       ))
+
+   (test-group
+    "options:rocksdb-options-create + rocksdb-block-based-options-create"
+    (let* ([bbopts (rocksdb-block-based-options-create :block-size 1
+                                                       :block-size-deviation 2
+                                                       :block-restart-interval 3
+                                                       :index-block-restart-interval 4
+                                                       :metadata-block-size 5
+                                                       :partition-filters #t
+                                                       :use-delta-encoding #t
+                                                       :filter-policy '(ribbon-hybrid 1.23 4.56)
+                                                       :no-block-cache #f
+                                                       :block-cache (rocksdb-cache-create-lru 65536)
+                                                       ;; :cache-compressed (rocksdb-cache-create-lru 65536)
+                                                       :whole-key-filtering #f
+                                                       :format-version 5
+                                                       :index-type 'two-level-index-search
+                                                       :data-block-index-type 'binary-search-and-hash
+                                                       :data-block-hash-ratio 7.89
+                                                       :hash-index-allow-collision #t
+                                                       :cache-index-and-filter-blocks #t
+                                                       :cache-index-and-filter-blocks-with-high-priority #t
+                                                       :pin-l0-filter-and-index-blocks-in-cache #t
+                                                       :pin-top-level-index-and-filter #t)]
+           [dbopts (rocksdb-options-create :table-factory bbopts :create-if-missing #t)]
+           [db (rocksdb-open dbopts (make-tmp-dir))]
+           [dbopts-alist (options->alist dbopts)])
+      (test-assert (rocksdb-options? dbopts))
+      (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
+      (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
+      (test-assert (not (rocksdb-closed? db)))))
    ))
