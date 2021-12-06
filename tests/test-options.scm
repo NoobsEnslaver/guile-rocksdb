@@ -19,6 +19,26 @@
             alist)
        ";") ";"))
 
+   (define (option-file->alist dir)
+     (define-values (file-name e) (get-latest-options-filename dir))
+     (unless file-name (error e))
+     (with-input-from-file (string-append dir "/" file-name)
+       (λ ()
+         (do ([acc '()]
+              [on 'root]
+              [line (read-line) (read-line)])
+             ((eof-object? line) acc)
+           (set! line (string-trim-both line))
+           (cond
+            [(string-prefix? "#" line)] ;skip
+            [(string= "" (string-trim-both line))
+             (set! on 'root)]
+            [(string-prefix? "[" line)
+             (set! on line)
+             (set! acc (assoc-set! acc on '()))]
+            [else (let ([line (string-split line #\=)]
+                        [sub-acc (assoc-ref acc on)])
+                    (assoc-set! acc on (assoc-set! sub-acc (car line) (cadr line))))])))))
 
    (test-group
     "options:get-latest-options-filename file not exists"
@@ -221,4 +241,117 @@
       (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
       (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
       (test-assert (not (rocksdb-closed? db)))))
+
+   (test-group
+    "options:rocksdb-options-create + rocksdb-plain-options-create"
+    (let* ([plainopts (rocksdb-plain-options-create 123 16 0.81 10)]
+           [dbopts (rocksdb-options-create :table-factory plainopts :create-if-missing #t)]
+           [db (rocksdb-open dbopts (make-tmp-dir))]
+           [dbopts-alist (options->alist dbopts)])
+      (test-assert (rocksdb-options? dbopts))
+      (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
+      (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
+      (test-assert (not (rocksdb-closed? db)))))
+
+   (test-group
+    "options:copy/destroy test"
+    (let* ([plainopts (rocksdb-plain-options-create 123 16 0.81 10)]
+           [cuckopts (rocksdb-cuckoo-options-create :hash-ratio 123.321
+                                                    :max-search-depth 98
+                                                    :cuckoo-block-size 7
+                                                    :identity-as-first-hash #t
+                                                    :use-module-hash #f)]
+           [bbopts (rocksdb-block-based-options-create :block-size 8192
+                                                       :block-size-deviation 20
+                                                       :block-restart-interval 3
+                                                       :index-block-restart-interval 4
+                                                       :metadata-block-size 5
+                                                       :partition-filters #t
+                                                       :use-delta-encoding #t
+                                                       :filter-policy '(bloom-full 12.345)
+                                                       :no-block-cache #f
+                                                       ;; :block-cache (rocksdb-cache-create-lru 65536)
+                                                       :cache-compressed (rocksdb-cache-create-lru 65536)
+                                                       :whole-key-filtering #f
+                                                       :format-version 5
+                                                       :index-type 'two-level-index-search
+                                                       :data-block-index-type 'binary-search-and-hash
+                                                       :data-block-hash-ratio 7.89
+                                                       :hash-index-allow-collision #t
+                                                       :cache-index-and-filter-blocks #t
+                                                       :cache-index-and-filter-blocks-with-high-priority #t
+                                                       :pin-l0-filter-and-index-blocks-in-cache #t
+                                                       :pin-top-level-index-and-filter #t)]
+
+           [dbopts-p1 (rocksdb-options-create :table-factory plainopts :create-if-missing #t)]
+           [dbopts-p2 (rocksdb-options-create :table-factory plainopts :create-if-missing #t)] ;copy
+           [dbopts-c1 (rocksdb-options-create :table-factory cuckopts :create-if-missing #t)]
+           [dbopts-c2 (rocksdb-options-create :table-factory cuckopts :create-if-missing #t)] ;copy
+           [dbopts-b1 (rocksdb-options-create :table-factory bbopts :create-if-missing #t)]
+           [dbopts-b2 (rocksdb-options-create :table-factory bbopts :create-if-missing #t)] ;copy
+
+           [dbopts-unused (rocksdb-options-create :table-factory bbopts :create-if-missing #t)]
+           [plainopts-unused (rocksdb-plain-options-create 123 16 0.81 10)]
+           [cuckopts-unused (rocksdb-cuckoo-options-create :hash-ratio 123.321)]
+           [bbopts-unused (rocksdb-block-based-options-create :block-size 1)])
+
+      (define (with-db fun dbopts)
+        (let ([dir (make-tmp-dir)])
+          (fun (rocksdb-open dbopts dir) dir)))
+
+      (define (test-config dbopts key specific-tests)
+        (let* ([dir (make-tmp-dir)]
+               [db (rocksdb-open dbopts dir)]
+               )
+          (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
+          (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
+          (test-assert (not (rocksdb-closed? db)))
+          (rocksdb-close! db)
+          (specific-tests (assoc-ref (option-file->alist dir) key))))
+
+      (define (validate-plain opts)
+        (test-equal "123" (assoc-ref opts "user_key_len"))
+        (test-equal "10" (assoc-ref opts "index_sparseness"))
+        (test-equal "16" (assoc-ref opts "bloom_bits_per_key"))
+        (test-equal "0,810000" (assoc-ref opts "hash_table_ratio")))
+
+      (define (validate-cuckoo opts)
+        (test-equal "false" (assoc-ref opts "use_module_hash"))
+        (test-equal "123,321000" (assoc-ref opts "hash_table_ratio"))
+        (test-equal "7" (assoc-ref opts "cuckoo_block_size"))
+        (test-equal "98" (assoc-ref opts "max_search_depth"))
+        (test-equal "true" (assoc-ref opts "identity_as_first_hash")))
+
+      (define (validate-bb opts)
+        (test-equal "true" (assoc-ref opts "pin_top_level_index_and_filter"))
+        (test-equal "20" (assoc-ref opts "block_size_deviation"))
+        (test-equal "false" (assoc-ref opts "whole_key_filtering"))
+        (test-equal "5" (assoc-ref opts "metadata_block_size"))
+        (test-equal "5" (assoc-ref opts "format_version"))
+        (test-equal "8192" (assoc-ref opts "block_size"))
+        (test-equal "true" (assoc-ref opts "cache_index_and_filter_blocks"))
+        (test-equal "true" (assoc-ref opts "partition_filters"))
+        (test-equal "true" (assoc-ref opts "hash_index_allow_collision"))
+        (test-equal "3" (assoc-ref opts "block_restart_interval"))
+        (test-equal "true" (assoc-ref opts "cache_index_and_filter_blocks_with_high_priority"))
+        (test-equal "rocksdb.BuiltinBloomFilter" (assoc-ref opts "filter_policy")) ;FIXME: ribbon
+        (test-equal "true" (assoc-ref opts "pin_l0_filter_and_index_blocks_in_cache"))
+        (test-equal "7,890000" (assoc-ref opts "data_block_hash_table_util_ratio"))
+        (test-equal "4" (assoc-ref opts "index_block_restart_interval"))
+        (test-equal "false" (assoc-ref opts "no_block_cache"))
+        (test-equal "kTwoLevelIndexSearch" (assoc-ref opts "index_type"))
+        (test-equal "kDataBlockBinaryAndHash" (assoc-ref opts "data_block_index_type"))
+        (test-equal "false" (assoc-ref opts "whole_key_filtering"))
+        (test-equal "20" (assoc-ref opts "block_size_deviation")))
+
+      (test-config dbopts-p1 "[TableOptions/PlainTable \"default\"]" validate-plain)
+      (test-config dbopts-p2 "[TableOptions/PlainTable \"default\"]" validate-plain)
+
+      (test-config dbopts-c1 "[TableOptions/CuckooTable \"default\"]" validate-cuckoo)
+      (test-config dbopts-c2 "[TableOptions/CuckooTable \"default\"]" validate-cuckoo)
+
+      (test-config dbopts-b1 "[TableOptions/BlockBasedTable \"default\"]" validate-bb)
+      (test-config dbopts-b2 "[TableOptions/BlockBasedTable \"default\"]" validate-bb)
+
+      ))
    ))

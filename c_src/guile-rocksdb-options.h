@@ -10,6 +10,11 @@ static SCM k_max_background_jobs;
 static SCM k_max_background_jobs;
 static SCM k_table_factory;
 
+extern rocksdb_cuckoo_table_options_t*
+  rocksdb_cuckoo_options_copy(rocksdb_cuckoo_table_options_t *base);
+extern rocksdb_block_based_table_options_t*
+  rocksdb_block_based_options_copy(rocksdb_block_based_table_options_t *base);
+
 // --------------- Wrapers -------------------------
 SCM grocksdb_options_create(SCM rest){
     SCM create_if_missing = SCM_UNDEFINED;
@@ -81,16 +86,27 @@ SCM grocksdb_options_create(SCM rest){
 
     if (!SCM_UNBNDP(table_factory)){
         if(SCM_IS_A_P(table_factory, scm_rocksdb_block_based_options_t)){
-            ASSERT_CONSUME(scm_rocksdb_block_based_options_t, table_factory);
-            rocksdb_options_set_block_based_table_factory(opts, scm_get_ref(table_factory));
+            rocksdb_block_based_table_options_t* bbopts = scm_get_ref(table_factory);
+            bbopts = scm_foreign_object_ref(table_factory, 1)?
+                rocksdb_block_based_options_copy(bbopts) : bbopts;
+            scm_foreign_object_set_x(table_factory, 1, (void *)true);
+            rocksdb_options_set_block_based_table_factory(opts, bbopts);
         }
 
         else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_options_t)){
-            ASSERT_CONSUME(scm_rocksdb_cuckoo_options_t, table_factory);
-            rocksdb_options_set_cuckoo_table_factory(opts, scm_get_ref(table_factory));
+            rocksdb_cuckoo_table_options_t* cuckopts = scm_get_ref(table_factory);
+            cuckopts = scm_foreign_object_ref(table_factory, 1)?
+                rocksdb_cuckoo_options_copy(cuckopts) : cuckopts;
+            scm_foreign_object_set_x(table_factory, 1, (void *)true);
+            rocksdb_options_set_cuckoo_table_factory(opts, cuckopts);
         }
-        // else if(SCM_IS_A_P(table_factory, scm_rocksdb_plain_table_options_t))
-        //     rocksdb_options_set_cuckoo_table_factory(opts, scm_get_ref(table_factory));
+        else if(SCM_IS_A_P(table_factory, scm_rocksdb_plain_options_t))
+            rocksdb_options_set_plain_table_factory
+                (opts,
+                 scm_to_uint32(scm_foreign_object_ref(table_factory, 0)),
+                 scm_to_int(scm_foreign_object_ref(table_factory, 1)),
+                 scm_to_double(scm_foreign_object_ref(table_factory, 2)),
+                 scm_to_size_t(scm_foreign_object_ref(table_factory, 3)));
         else
             scm_wrong_type_arg_msg("rocksdb-options-create:table-factory", SCM_ARG1, table_factory,
                 "rocksdb-block-based-options | rocksdb-chukoo-table-options | rocksdb-plain-table-options");
@@ -171,7 +187,8 @@ void init_options() {
     k_max_background_jobs = scm_from_utf8_keyword("max-background-jobs");
     k_table_factory = scm_from_utf8_keyword("table-factory");
 
-    scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?", grocksdb_options_destroy);
+    scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?",
+                                                  grocksdb_options_destroy);
 
     DEFREST("rocksdb-options-create", grocksdb_options_create);
     DEF("rocksdb-options-set-create-if-missing!", 2, grocksdb_options_set_create_if_missing);

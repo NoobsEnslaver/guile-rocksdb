@@ -12,6 +12,7 @@
              (srfi srfi-1)
              (srfi srfi-64)
              (ice-9 receive)
+             (ice-9 rdelim)
              (oop goops))
 
 (read-set! keywords 'prefix)
@@ -49,11 +50,8 @@
    (else
     (error "rm-rf: can't delete " tree))))
 
-(define (with-db fun)
-  (let ([dbopts (rocksdb-options-create)])
-    (rocksdb-options-set-create-if-missing! dbopts 1)
-    (define db (rocksdb-open dbopts (make-tmp-dir)))
-    (fun db)))
+(define* (with-db fun :optional (dbopts (rocksdb-options-create :create-if-missing #t)))
+    (fun (rocksdb-open dbopts (make-tmp-dir))))
 
 (let ([top-dir (getcwd)]
       [test-dir (make-tmp-dir)])

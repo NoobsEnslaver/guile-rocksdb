@@ -117,7 +117,7 @@ SCM grocksdb_block_based_options_create(SCM rest){
     if(!SCM_UNBNDP(block_cache_compressed)){
         scm_assert_foreign_object_type(scm_rocksdb_cache_t, block_cache_compressed);
         scm_foreign_object_set_x(block_cache_compressed, 1, (void *)true);
-        rocksdb_block_based_options_set_block_cache_compressed(opts, scm_get_ref(block_cache));}
+        rocksdb_block_based_options_set_block_cache_compressed(opts, scm_get_ref(block_cache_compressed));}
     if(!SCM_UNBNDP(whole_key_filtering))
         rocksdb_block_based_options_set_whole_key_filtering(opts, scm_is_true(whole_key_filtering));
     if(!SCM_UNBNDP(format_version)){
@@ -174,7 +174,7 @@ SCM grocksdb_block_based_options_create(SCM rest){
 }
 
 void grocksdb_block_based_options_destroy(SCM bbopts){
-    MXSAFE_DESTROY_WITH(bbopts, if(!scm_foreign_object_ref(bbopts, 1)) rocksdb_options_destroy);
+    SAFE_DESTROY_WITH(bbopts, if(!scm_foreign_object_ref(bbopts, 1)) rocksdb_block_based_options_destroy);
 }
 
 SCM grocksdb_cuckoo_options_create(SCM rest){
@@ -208,8 +208,23 @@ SCM grocksdb_cuckoo_options_create(SCM rest){
 }
 
 void grocksdb_cuckoo_options_destroy(SCM cuckopts){
-    MXSAFE_DESTROY_WITH(cuckopts, if(!scm_foreign_object_ref(cuckopts, 1)) rocksdb_cuckoo_options_destroy);
+    SAFE_DESTROY_WITH(cuckopts, if(!scm_foreign_object_ref(cuckopts, 1)) rocksdb_cuckoo_options_destroy);
 }
+
+SCM grocksdb_plain_options_create(SCM user_key_len, SCM bloom_bits_per_key,
+                                  SCM hash_table_ratio, SCM index_sparseness){
+    SCM_ASSERT_TYPE(scm_is_exact_integer(user_key_len), user_key_len, SCM_ARG1,
+                        "rocksdb-plain-options-create", "integer");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(bloom_bits_per_key), bloom_bits_per_key, SCM_ARG2,
+                        "rocksdb-plain-options-create", "integer");
+    SCM_ASSERT_TYPE(scm_is_real(hash_table_ratio), hash_table_ratio, SCM_ARG3,
+                        "rocksdb-plain-options-create", "real");
+    SCM_ASSERT_TYPE(scm_is_exact_integer(index_sparseness), index_sparseness, SCM_ARG4,
+                        "rocksdb-plain-options-create", "integer");
+    void* slots[4] = {user_key_len, bloom_bits_per_key, hash_table_ratio, index_sparseness};
+    return scm_make_foreign_object_n(scm_rocksdb_plain_options_t, 4, slots);
+}
+
 
 void init_table_options() {
     k_block_size = scm_from_utf8_keyword("block-size");
@@ -254,7 +269,14 @@ void init_table_options() {
         define_type_wrapper_2("rocksdb-block-based-options", "consumed?", grocksdb_block_based_options_destroy);
     scm_rocksdb_cuckoo_options_t =
         define_type_wrapper_2("rocksdb-cuckoo-options", "consumed?", grocksdb_cuckoo_options_destroy);
+    SCM plain_slots = scm_list_4(scm_from_utf8_symbol("user-key-len"),
+                                 scm_from_utf8_symbol("bloom-bits-per-key"),
+                                 scm_from_utf8_symbol("hash-table-ratio"),
+                                 scm_from_utf8_symbol("index-sparseness"));
+    scm_rocksdb_plain_options_t = scm_make_foreign_object_type(scm_from_utf8_symbol("rocksdb-plain-options"),
+                                                               plain_slots, NULL);
 
     DEFREST("rocksdb-block-based-options-create", grocksdb_block_based_options_create);
     DEFREST("rocksdb-cuckoo-options-create", grocksdb_cuckoo_options_create);
+    DEF("rocksdb-plain-options-create", 4, grocksdb_plain_options_create);
 }

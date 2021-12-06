@@ -23,6 +23,8 @@ struct rocksdb_t {DB* rep;};
 struct rocksdb_options_t { Options rep; };
 struct rocksdb_env_t { Env* rep; bool is_default;};
 struct rocksdb_cache_t { std::shared_ptr<Cache> rep; };
+struct rocksdb_cuckoo_table_options_t{CuckooTableOptions rep;};
+struct rocksdb_block_based_table_options_t{BlockBasedTableOptions rep;};
 
 // spec: (string, rocksdb_cache_t?) -> (rocksdb_options_t, (list (string . rocksdb_options_t))) | (#f, string)
 SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
@@ -83,7 +85,7 @@ SCM gget_latest_options_filename(SCM scm_dbpath, SCM scm_env){
     std::string options_file_name;
     Status s = GetLatestOptionsFileName(cpp_dbpath, cpp_env, &options_file_name);
 
-    SCM result[2] = {SCM_BOOL_F, SCM_UNDEFINED};
+    SCM result[2] = {SCM_BOOL_F, SCM_BOOL_F};
     if (s.ok()){
         result[0] = scm_from_utf8_string(options_file_name.c_str());
     } else {
@@ -224,6 +226,18 @@ SCM grocksdb_get_options(SCM scm_db){
     return scm_make_foreign_object_2(scm_rocksdb_options_t,
                                      new rocksdb_options_t{c_db->rep->GetOptions()}, (void*)true);
 }
+
+rocksdb_cuckoo_table_options_t*
+rocksdb_cuckoo_options_copy(rocksdb_cuckoo_table_options_t *base){
+    return new rocksdb_cuckoo_table_options_t(*base);
+}
+
+rocksdb_block_based_table_options_t*
+rocksdb_block_based_options_copy(rocksdb_block_based_table_options_t *base) {
+    return new rocksdb_block_based_table_options_t(*base);
+}
+
+
 }
 
 // ---------------- TODO ------------------
