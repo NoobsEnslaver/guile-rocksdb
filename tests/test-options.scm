@@ -301,8 +301,7 @@
 
       (define (test-config dbopts key specific-tests)
         (let* ([dir (make-tmp-dir)]
-               [db (rocksdb-open dbopts dir)]
-               )
+               [db (rocksdb-open dbopts dir)])
           (rocksdb-put db #u8(1 1 1) #u8(2 2 2))
           (test-equal #u8(2 2 2) (rocksdb-get db #u8(1 1 1)))
           (test-assert (not (rocksdb-closed? db)))
@@ -334,7 +333,7 @@
         (test-equal "true" (assoc-ref opts "hash_index_allow_collision"))
         (test-equal "3" (assoc-ref opts "block_restart_interval"))
         (test-equal "true" (assoc-ref opts "cache_index_and_filter_blocks_with_high_priority"))
-        (test-equal "rocksdb.BuiltinBloomFilter" (assoc-ref opts "filter_policy")) ;FIXME: ribbon
+        (test-equal "rocksdb.BuiltinBloomFilter" (assoc-ref opts "filter_policy")) ;FIXME: ribbon?
         (test-equal "true" (assoc-ref opts "pin_l0_filter_and_index_blocks_in_cache"))
         (test-equal "7,890000" (assoc-ref opts "data_block_hash_table_util_ratio"))
         (test-equal "4" (assoc-ref opts "index_block_restart_interval"))

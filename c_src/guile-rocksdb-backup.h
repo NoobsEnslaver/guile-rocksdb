@@ -1,12 +1,11 @@
 // --------------- Wrapers -------------------------
 
 SCM grocksdb_backup_engine_open(SCM options, SCM path){
-    ASSERT_CONSUME_OPTIONS(options);
     SCM_ASSERT_TYPE(scm_is_string(path), path, SCM_ARG2, "rocksdb_backup_engine_open", "string");
 
     char *err = NULL;
     rocksdb_backup_engine_t* bk;
-    bk = rocksdb_backup_engine_open(scm_get_ref(options),
+    bk = rocksdb_backup_engine_open(UNWRAP_OPTIONS(options),
                                     scm_to_utf8_string(path), &err);
     if(err != NULL) scm_syserror(err);
     return scm_make_foreign_object_1(scm_rocksdb_backup_engine_t, bk);

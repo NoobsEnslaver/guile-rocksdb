@@ -85,21 +85,12 @@ SCM grocksdb_options_create(SCM rest){
         rocksdb_options_set_max_background_jobs(opts, scm_to_size_t(max_background_jobs));}
 
     if (!SCM_UNBNDP(table_factory)){
-        if(SCM_IS_A_P(table_factory, scm_rocksdb_block_based_options_t)){
-            rocksdb_block_based_table_options_t* bbopts = scm_get_ref(table_factory);
-            bbopts = scm_foreign_object_ref(table_factory, 1)?
-                rocksdb_block_based_options_copy(bbopts) : bbopts;
-            scm_foreign_object_set_x(table_factory, 1, (void *)true);
-            rocksdb_options_set_block_based_table_factory(opts, bbopts);
-        }
-
-        else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_options_t)){
-            rocksdb_cuckoo_table_options_t* cuckopts = scm_get_ref(table_factory);
-            cuckopts = scm_foreign_object_ref(table_factory, 1)?
-                rocksdb_cuckoo_options_copy(cuckopts) : cuckopts;
-            scm_foreign_object_set_x(table_factory, 1, (void *)true);
-            rocksdb_options_set_cuckoo_table_factory(opts, cuckopts);
-        }
+        if(SCM_IS_A_P(table_factory, scm_rocksdb_block_based_options_t))
+            rocksdb_options_set_block_based_table_factory
+                (opts, scm_get_exclusive_ref(table_factory, (void* (*)(void*))rocksdb_block_based_options_copy));
+        else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_options_t))
+            rocksdb_options_set_cuckoo_table_factory
+                (opts, scm_get_exclusive_ref(table_factory, (void* (*)(void*))rocksdb_cuckoo_options_copy));
         else if(SCM_IS_A_P(table_factory, scm_rocksdb_plain_options_t))
             rocksdb_options_set_plain_table_factory
                 (opts,
@@ -250,6 +241,3 @@ void init_options() {
 
 // extern ROCKSDB_LIBRARY_API void rocksdb_set_options_cf(
 //     rocksdb_t* db, rocksdb_column_family_handle_t* handle, int count, const char* const keys[], const char* const values[], char** errptr);
-
-// extern ROCKSDB_LIBRARY_API rocksdb_options_t* rocksdb_options_create_copy(
-//     rocksdb_options_t*);

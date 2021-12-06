@@ -7,7 +7,6 @@
     scm_foreign_object_set_x(obj, 1, (void *)true)
 #define BIND_REF_OR_DEFAULT(type, from, to, def) if(SCM_UNBNDP(from)) to = def; \
     else{scm_assert_foreign_object_type(type, from); to = scm_get_ref(from);}
-#define ASSERT_CONSUME_OPTIONS(opt) ASSERT_CONSUME(scm_rocksdb_options_t, opt)
 #define SAFE_DESTROY_WITH(obj, fun) if(scm_foreign_object_ref(obj, 0)){\
         fun(scm_foreign_object_ref(obj, 0));scm_foreign_object_set_x(obj, 0, NULL);}
 #define SAFE_DESTROY_WITH_2(obj, fun)                                       \
@@ -18,11 +17,25 @@
 #define MXSAFE_DESTROY_WITH(obj, fun) MX(SAFE_DESTROY_WITH(obj, fun))
 #define MXSAFE_DESTROY_WITH_2(obj, fun) MX(SAFE_DESTROY_WITH_2(obj, fun))
 
+//unwrap ref with NULL checks
 void* scm_get_ref(SCM obj){
     void *ref = scm_foreign_object_ref(obj, 0);
     if(!ref) scm_syserror_msg(NULL, "using object after destruction", scm_list_1(obj), EFAULT);
     return ref;
 }
+
+// unwrap ref with NULL checks, check if it used before, if does - create copy, otherwise
+// return original ref and mark it as 'used'
+void* scm_get_exclusive_ref(SCM obj, void* (*copier)(void*)){
+    void* ref = scm_get_ref(obj);
+    ref = scm_foreign_object_ref(obj, 1)? copier(ref) : ref;
+    scm_foreign_object_set_x(obj, 1, (void *)true);
+    return ref;
+}
+
+//just 'scm_get_exclusive_ref' with types casting
+#define UNWRAP_OPTIONS(obj)\
+    (rocksdb_options_t*)scm_get_exclusive_ref(obj, (void* (*)(void*))rocksdb_options_create_copy)
 
 static pthread_mutex_t destroy_mutex;
 
@@ -47,7 +60,7 @@ SCM scm_rocksdb_plain_options_t;
 
 // ------------------- Helpers ------------------------
 void* scm_copy_u8vector(const void *src, size_t len){
-    scm_take_u8vector(memcpy(scm_malloc(len), src, len), len);
+    return scm_take_u8vector(memcpy(scm_malloc(len), src, len), len);
 }
 
 void display(const char* msg){
