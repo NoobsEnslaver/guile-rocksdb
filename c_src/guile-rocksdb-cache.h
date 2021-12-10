@@ -27,6 +27,7 @@ SCM grocksdb_cache_create_lru(SCM capacity, SCM allocator){
         scm_wrong_type_arg_msg("rocksdb-cache-create-lru", SCM_ARG2, allocator, "allocator name");
     }
 
+    //FIXME: just keep link to cache in options, db or something like this
     return scm_make_foreign_object_2(scm_rocksdb_cache_t, rocksdb_cache_create_lru_opts(opts), NULL);
 };
 

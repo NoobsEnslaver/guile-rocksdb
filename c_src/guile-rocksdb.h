@@ -2,9 +2,6 @@
 #define DEF(name,arity,funref) scm_c_define_gsubr(name, arity, 0, 0, funref); scm_c_export(name, NULL)
 #define DEFOPT(name,arity,opt,funref) scm_c_define_gsubr(name, arity, opt, 0, funref); scm_c_export(name, NULL)
 #define DEFREST(name,funref) scm_c_define_gsubr(name, 0, 0, 1, funref); scm_c_export(name, NULL)
-#define ASSERT_CONSUME(type, obj) scm_assert_foreign_object_type(type, obj); \
-    if(scm_foreign_object_ref(obj, 1)) scm_misc_error(NULL, "using object after it's consumed", SCM_EOL); \
-    scm_foreign_object_set_x(obj, 1, (void *)true)
 #define BIND_REF_OR_DEFAULT(type, from, to, def) if(SCM_UNBNDP(from)) to = def; \
     else{scm_assert_foreign_object_type(type, from); to = scm_get_ref(from);}
 #define SAFE_DESTROY_WITH(obj, fun) if(scm_foreign_object_ref(obj, 0)){\
@@ -23,19 +20,6 @@ void* scm_get_ref(SCM obj){
     if(!ref) scm_syserror_msg(NULL, "using object after destruction", scm_list_1(obj), EFAULT);
     return ref;
 }
-
-// unwrap ref with NULL checks, check if it used before, if does - create copy, otherwise
-// return original ref and mark it as 'used'
-void* scm_get_exclusive_ref(SCM obj, void* (*copier)(void*)){
-    void* ref = scm_get_ref(obj);
-    ref = scm_foreign_object_ref(obj, 1)? copier(ref) : ref;
-    scm_foreign_object_set_x(obj, 1, (void *)true);
-    return ref;
-}
-
-//just 'scm_get_exclusive_ref' with types casting
-#define UNWRAP_OPTIONS(obj)\
-    (rocksdb_options_t*)scm_get_exclusive_ref(obj, (void* (*)(void*))rocksdb_options_create_copy)
 
 static pthread_mutex_t destroy_mutex;
 

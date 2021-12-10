@@ -43,7 +43,7 @@ SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
                                 cpp_options, cpp_cf_descs_vec);
     } else {
         scm_assert_foreign_object_type(scm_rocksdb_cache_t, scm_cache);
-        scm_foreign_object_set_x(scm_cache, 1, (void *)true);
+        scm_foreign_object_set_x(scm_cache, 1, (void *)true); //FIXME
         rocksdb_cache_t* c_cache = (rocksdb_cache_t*)scm_get_ref(scm_cache);
         std::shared_ptr<Cache> cpp_cache = c_cache->rep;
         s = LoadOptionsFromFile(config_options, cpp_options_file_name,
@@ -51,14 +51,14 @@ SCM gload_options_from_file(SCM scm_options_file_name, SCM scm_cache){
     };
     if (s.ok()){
         auto op = new Options(*cpp_options, *(new ColumnFamilyOptions()));
-        SCM scm_options = scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                                    new rocksdb_options_t{*op}, (void*)false);
+        SCM scm_options = scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                                    new rocksdb_options_t{*op});
         SCM scm_list_cf = SCM_EOL;
         for (const auto &cf_desc : *cpp_cf_descs_vec){
             auto cfop = new Options(*(new DBOptions()), cf_desc.options);
             SCM scm_pair = scm_cons(scm_from_utf8_string(cf_desc.name.c_str()),
-                                    scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                                              new rocksdb_options_t{*cfop}, (void*)false));
+                                    scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                                              new rocksdb_options_t{*cfop}));
             scm_list_cf = scm_cons(scm_pair, scm_list_cf);
         };
         result[0] = scm_options;
@@ -121,14 +121,14 @@ SCM gload_latest_options(SCM scm_dbpath, SCM scm_cache){
 
     if (s.ok()){
         auto op = new Options(*cpp_options, *(new ColumnFamilyOptions()));
-        SCM scm_options = scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                                    new rocksdb_options_t{*op}, (void*)false);
+        SCM scm_options = scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                                    new rocksdb_options_t{*op});
         SCM scm_list_cf = SCM_EOL;
         for (const auto &cf_desc : *cpp_cf_descs_vec){
             auto cfop = new Options(*(new DBOptions()), cf_desc.options);
             SCM scm_pair = scm_cons(scm_from_utf8_string(cf_desc.name.c_str()),
-                                    scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                                              new rocksdb_options_t{*cfop}, (void*)false));
+                                    scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                                              new rocksdb_options_t{*cfop}));
             scm_list_cf = scm_cons(scm_pair, scm_list_cf);
         };
         result[0] = scm_options;
@@ -160,8 +160,8 @@ SCM gget_options_from_string(SCM scm_string, SCM scm_base_opts){
 
     Status s = GetOptionsFromString(config_options, cpp_base_options, cpp_string, cpp_new_options);
     if (s.ok()){
-        result[0] = scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                              new rocksdb_options_t{*cpp_new_options}, (void*)false);
+        result[0] = scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                              new rocksdb_options_t{*cpp_new_options});
     } else {
         if (SCM_UNBNDP(scm_base_opts)) rocksdb_options_destroy(c_base_options);
         result[1] = scm_from_utf8_string(s.getState());
@@ -220,11 +220,12 @@ SCM grocksdb_options_string_to_alist(SCM scm_string_db_opts){
 }
 
 // spec: (rocksdb_t) -> rocksdb_options_t
+// FIXME: maybe return copy?
 SCM grocksdb_get_options(SCM scm_db){
     scm_assert_foreign_object_type(scm_rocksdb_t, scm_db);
     rocksdb_t* c_db = (rocksdb_t *)scm_get_ref(scm_db);
-    return scm_make_foreign_object_2(scm_rocksdb_options_t,
-                                     new rocksdb_options_t{c_db->rep->GetOptions()}, (void*)true);
+    return scm_make_foreign_object_1(scm_rocksdb_options_t,
+                                     new rocksdb_options_t{c_db->rep->GetOptions()});
 }
 
 rocksdb_cuckoo_table_options_t*

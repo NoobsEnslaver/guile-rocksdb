@@ -170,11 +170,11 @@ SCM grocksdb_block_based_options_create(SCM rest){
 
         rocksdb_block_based_options_set_filter_policy(opts, filter_policy_obj);}
 
-    return scm_make_foreign_object_2(scm_rocksdb_block_based_options_t, opts, false);
+    return scm_make_foreign_object_1(scm_rocksdb_block_based_options_t, opts);
 }
 
 void grocksdb_block_based_options_destroy(SCM bbopts){
-    SAFE_DESTROY_WITH(bbopts, if(!scm_foreign_object_ref(bbopts, 1)) rocksdb_block_based_options_destroy);
+    SAFE_DESTROY_WITH(bbopts, rocksdb_block_based_options_destroy);
 }
 
 SCM grocksdb_cuckoo_options_create(SCM rest){
@@ -204,11 +204,11 @@ SCM grocksdb_cuckoo_options_create(SCM rest){
     if(!SCM_UNBNDP(use_module_hash))
         rocksdb_cuckoo_options_set_use_module_hash(cuckopts, scm_is_true(use_module_hash));
 
-    return scm_make_foreign_object_2(scm_rocksdb_cuckoo_options_t, cuckopts, false);
+    return scm_make_foreign_object_1(scm_rocksdb_cuckoo_options_t, cuckopts);
 }
 
 void grocksdb_cuckoo_options_destroy(SCM cuckopts){
-    SAFE_DESTROY_WITH(cuckopts, if(!scm_foreign_object_ref(cuckopts, 1)) rocksdb_cuckoo_options_destroy);
+    SAFE_DESTROY_WITH(cuckopts, rocksdb_cuckoo_options_destroy);
 }
 
 SCM grocksdb_plain_options_create(SCM user_key_len, SCM bloom_bits_per_key,
@@ -266,9 +266,9 @@ void init_table_options() {
     scm_two_level_index_search_symbol = scm_permanent_object(scm_from_utf8_symbol("two-level-index-search"));
 
     scm_rocksdb_block_based_options_t =
-        define_type_wrapper_2("rocksdb-block-based-options", "consumed?", grocksdb_block_based_options_destroy);
+        define_type_wrapper("rocksdb-block-based-options", grocksdb_block_based_options_destroy);
     scm_rocksdb_cuckoo_options_t =
-        define_type_wrapper_2("rocksdb-cuckoo-options", "consumed?", grocksdb_cuckoo_options_destroy);
+        define_type_wrapper("rocksdb-cuckoo-options", grocksdb_cuckoo_options_destroy);
     SCM plain_slots = scm_list_4(scm_from_utf8_symbol("user-key-len"),
                                  scm_from_utf8_symbol("bloom-bits-per-key"),
                                  scm_from_utf8_symbol("hash-table-ratio"),

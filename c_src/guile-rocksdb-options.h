@@ -87,10 +87,10 @@ SCM grocksdb_options_create(SCM rest){
     if (!SCM_UNBNDP(table_factory)){
         if(SCM_IS_A_P(table_factory, scm_rocksdb_block_based_options_t))
             rocksdb_options_set_block_based_table_factory
-                (opts, scm_get_exclusive_ref(table_factory, (void* (*)(void*))rocksdb_block_based_options_copy));
+                (opts, rocksdb_block_based_options_copy(scm_get_ref(table_factory)));
         else if(SCM_IS_A_P(table_factory, scm_rocksdb_cuckoo_options_t))
             rocksdb_options_set_cuckoo_table_factory
-                (opts, scm_get_exclusive_ref(table_factory, (void* (*)(void*))rocksdb_cuckoo_options_copy));
+                (opts, rocksdb_cuckoo_options_copy(scm_get_ref(table_factory)));
         else if(SCM_IS_A_P(table_factory, scm_rocksdb_plain_options_t))
             rocksdb_options_set_plain_table_factory
                 (opts,
@@ -103,11 +103,11 @@ SCM grocksdb_options_create(SCM rest){
                 "rocksdb-block-based-options | rocksdb-chukoo-table-options | rocksdb-plain-table-options");
     }
 
-    return scm_make_foreign_object_2(scm_rocksdb_options_t, opts, false);
+    return scm_make_foreign_object_1(scm_rocksdb_options_t, opts);
 }
 
 void grocksdb_options_destroy(SCM options){
-    MXSAFE_DESTROY_WITH(options, if(!scm_foreign_object_ref(options, 1)) rocksdb_options_destroy);
+    SAFE_DESTROY_WITH(options, rocksdb_options_destroy);
 }
 
 SCM grocksdb_options_set_create_if_missing(SCM options, SCM create_if_missing){
@@ -178,8 +178,7 @@ void init_options() {
     k_max_background_jobs = scm_from_utf8_keyword("max-background-jobs");
     k_table_factory = scm_from_utf8_keyword("table-factory");
 
-    scm_rocksdb_options_t = define_type_wrapper_2("rocksdb-options", "already-consumed?",
-                                                  grocksdb_options_destroy);
+    scm_rocksdb_options_t = define_type_wrapper("rocksdb-options", grocksdb_options_destroy);
 
     DEFREST("rocksdb-options-create", grocksdb_options_create);
     DEF("rocksdb-options-set-create-if-missing!", 2, grocksdb_options_set_create_if_missing);

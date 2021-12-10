@@ -3,7 +3,8 @@ SCM grocksdb_open(SCM options, SCM db_path){
     SCM_ASSERT_TYPE(scm_is_string(db_path), db_path, SCM_ARG2, "rocksdb_open", "string");
 
     char *err = NULL;
-    rocksdb_t *db = rocksdb_open(UNWRAP_OPTIONS(options), scm_to_utf8_string(db_path), &err);
+    rocksdb_t *db = rocksdb_open(rocksdb_options_create_copy(scm_get_ref(options)),
+                                 scm_to_utf8_string(db_path), &err);
     if(err != NULL) scm_syserror(err);
 
     return scm_make_foreign_object_1(scm_rocksdb_t, db);
@@ -14,7 +15,7 @@ SCM grocksdb_open_with_ttl(SCM options, SCM db_path, SCM ttl){
     SCM_ASSERT_TYPE(scm_is_exact_integer(ttl), ttl, SCM_ARG3, "rocksdb_open_with_ttl", "exact integer");
 
     char *err = NULL;
-    rocksdb_t *db = rocksdb_open_with_ttl(UNWRAP_OPTIONS(options),
+    rocksdb_t *db = rocksdb_open_with_ttl(rocksdb_options_create_copy(scm_get_ref(options)),
                                           scm_to_utf8_string(db_path),
                                           scm_to_size_t(ttl), &err);
     if(err != NULL) scm_syserror(err);
@@ -25,7 +26,7 @@ SCM grocksdb_open_for_read_only(SCM options, SCM db_path, SCM error_if_log_file_
     SCM_ASSERT_TYPE(scm_is_string(db_path), db_path, SCM_ARG2, "rocksdb-open-for-read-only", "string");
 
     char *err = NULL;
-    rocksdb_t *db = rocksdb_open_for_read_only(UNWRAP_OPTIONS(options),
+    rocksdb_t *db = rocksdb_open_for_read_only(rocksdb_options_create_copy(scm_get_ref(options)),
                                                scm_to_utf8_string(db_path),
                                                scm_is_true(error_if_log_file_exist), &err);
     if(err != NULL) scm_syserror(err);
@@ -94,7 +95,7 @@ SCM grocksdb_create_column_family(SCM scm_db, SCM scm_options, SCM scm_cf_name){
     SCM_ASSERT_TYPE(scm_is_string(scm_cf_name), scm_cf_name, SCM_ARG3, "rocksdb-create-column-family", "string");
 
     h = rocksdb_create_column_family(scm_get_ref(scm_db),
-                                     UNWRAP_OPTIONS(scm_options),
+                                     rocksdb_options_create_copy(scm_get_ref(scm_options)),
                                      scm_to_utf8_string(scm_cf_name), &err);
     return scm_make_foreign_object_1(scm_rocksdb_column_family_handle_t, h);
 }
@@ -184,7 +185,7 @@ SCM grocksdb_get(SCM scm_db, SCM scm_key, SCM scm_readopt){
                             SCM_BYTEVECTOR_LENGTH(scm_key),
                             &vallen, &err);
     if(err != NULL) scm_syserror(err);
-
+    //scm_remember_upto_here_1(scm_readopt); ?
     //ATTENTION: it's SRFI-4 u8 uniform numeric vector, not 'bytevector', fortunately it's compatible under hood
     return ret == NULL? SCM_BOOL_F : scm_take_u8vector((uint8_t *) ret, vallen);
 }

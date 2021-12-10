@@ -1,11 +1,12 @@
 // --------------- Wrapers -------------------------
 
 SCM grocksdb_backup_engine_open(SCM options, SCM path){
+    scm_assert_foreign_object_type(scm_rocksdb_options_t, options);
     SCM_ASSERT_TYPE(scm_is_string(path), path, SCM_ARG2, "rocksdb_backup_engine_open", "string");
 
     char *err = NULL;
     rocksdb_backup_engine_t* bk;
-    bk = rocksdb_backup_engine_open(UNWRAP_OPTIONS(options),
+    bk = rocksdb_backup_engine_open(rocksdb_options_create_copy(scm_get_ref(options)),
                                     scm_to_utf8_string(path), &err);
     if(err != NULL) scm_syserror(err);
     return scm_make_foreign_object_1(scm_rocksdb_backup_engine_t, bk);
@@ -46,21 +47,15 @@ SCM grocksdb_backup_engine_purge_old_backups(SCM bk, SCM num_backups_to_keep){
     return SCM_UNSPECIFIED;
 }
 
-SCM grocksdb_restore_options_create(){
-    return scm_make_foreign_object_2(scm_rocksdb_restore_options_t,
-                                     rocksdb_restore_options_create(), (void*)false);
+SCM grocksdb_restore_options_create(SCM keep_log_files){
+    rocksdb_restore_options_t* ropts = rocksdb_restore_options_create();
+    if (!SCM_UNBNDP(keep_log_files))
+        rocksdb_restore_options_set_keep_log_files(ropts, scm_to_size_t(keep_log_files));
+    return scm_make_foreign_object_1(scm_rocksdb_restore_options_t, ropts);
 }
 
 void grocksdb_restore_options_destroy(SCM opt){
-    MXSAFE_DESTROY_WITH(opt, rocksdb_restore_options_destroy);
-}
-
-SCM grocksdb_restore_options_set_keep_log_files(SCM options, SCM n){
-    scm_assert_foreign_object_type(scm_rocksdb_restore_options_t, options);
-    SCM_ASSERT_TYPE(scm_is_exact_integer(n), n, SCM_ARG2, "rocksdb_restore_options_set_keep_log_files", "exact integer");
-
-    rocksdb_restore_options_set_keep_log_files(scm_get_ref(options), scm_to_size_t(n));
-    return SCM_UNSPECIFIED;
+    SAFE_DESTROY_WITH(opt, rocksdb_restore_options_destroy);
 }
 
 SCM grocksdb_backup_engine_verify_backup(SCM bk, SCM backup_id){
@@ -79,7 +74,6 @@ SCM grocksdb_backup_engine_restore_db_from_latest_backup(SCM bk, SCM db_dir, SCM
                     "rocksdb_backup_engine_restore_db_from_latest_backup", "string");
     SCM_ASSERT_TYPE(scm_is_string(wal_dir), wal_dir, SCM_ARG3,
                     "rocksdb_backup_engine_restore_db_from_latest_backup", "string");
-    ASSERT_CONSUME(scm_rocksdb_restore_options_t, opt);
 
     char *err = NULL;
     rocksdb_backup_engine_restore_db_from_latest_backup(scm_get_ref(bk),
@@ -149,8 +143,8 @@ void grocksdb_backup_engine_close(SCM bk){
 
 // --------------- Init -------------------------
 void init_backup() {
-    scm_rocksdb_restore_options_t = define_type_wrapper_2("rocksdb-restore-options", "already-consumed?",
-                                                          grocksdb_restore_options_destroy);
+    scm_rocksdb_restore_options_t = define_type_wrapper("rocksdb-restore-options",
+                                                        grocksdb_restore_options_destroy);
     scm_rocksdb_backup_engine_info_t = define_type_wrapper("rocksdb-backup-engine-info",
                                                            grocksdb_backup_engine_info_destroy);
     scm_rocksdb_backup_engine_t = define_type_wrapper("rocksdb-backup-engine",
@@ -159,7 +153,6 @@ void init_backup() {
     DEF("rocksdb-backup-engine-open", 2, &grocksdb_backup_engine_open);
     DEF("rocksdb-backup-engine-create-new-backup", 2, &grocksdb_backup_engine_create_new_backup);
     DEF("rocksdb-backup-engine-purge-old-backups", 2, &grocksdb_backup_engine_purge_old_backups);
-    DEF("rocksdb-restore-options-set-keep-log-files!", 2, &grocksdb_restore_options_set_keep_log_files);
     DEF("rocksdb-backup-engine-verify-backup", 2, &grocksdb_backup_engine_verify_backup);
     DEF("rocksdb-backup-engine-restore-db-from-latest-backup", 4, &grocksdb_backup_engine_restore_db_from_latest_backup);
     DEF("rocksdb-backup-engine-get-backup-info", 1, &grocksdb_backup_engine_get_backup_info);
@@ -169,4 +162,5 @@ void init_backup() {
     DEF("rocksdb-backup-engine-info-size", 2, &grocksdb_backup_engine_info_size);
     DEF("rocksdb-backup-engine-info-number-files", 2, &grocksdb_backup_engine_info_number_files);
 
+    DEFOPT("rocksdb-restore-options-create", 0, 1, grocksdb_restore_options_create);
 }
