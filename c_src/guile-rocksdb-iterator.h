@@ -1,5 +1,5 @@
 #define ASSERT_ITER(i) scm_assert_foreign_object_type(scm_rocksdb_iterator_t, i); \
-    if (!rocksdb_iter_valid(scm_get_ref(scm_iterator))) return SCM_BOOL_F
+    if (!rocksdb_iter_valid(scm_get_ref(i))) return SCM_BOOL_F
 
 extern SCM grocksdb_iterator_refresh(SCM scm_iterator);
 
@@ -9,6 +9,7 @@ SCM grocksdb_create_iterator(SCM scm_db, SCM scm_readopts){
     BIND_REF_OR_DEFAULT(scm_rocksdb_readoptions_t, scm_readopts, readopts, default_rocksdb_readoptions);
 
     rocksdb_iterator_t* iter = rocksdb_create_iterator(scm_get_ref(scm_db), readopts);
+    //FIXME: maybe, keep readopts is unnecessary
     void* slots[3] = {iter, scm_db, SCM_UNBNDP(scm_readopts) ? NULL : scm_readopts};
     return scm_make_foreign_object_n(scm_rocksdb_iterator_t, 3, slots);
 }
@@ -121,7 +122,8 @@ SCM grocksdb_iterator_p(SCM obj){
 }
 
 void init_iterator(){
-    scm_rocksdb_iterator_t = define_type_wrapper_3("rocksdb-iterator", "db", "opts", grocksdb_iter_destroy);
+    scm_rocksdb_iterator_t = define_type_wrapper_3("rocksdb-iterator", "db", "opts" /*remove?*/,
+                                                   grocksdb_iter_destroy);
 
     /* DEF("rocksdb-iter-destroy!", 1, grocksdb_iter_destroy); */
     DEFOPT("rocksdb-create-iterator", 1, 1, grocksdb_create_iterator);

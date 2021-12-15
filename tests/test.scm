@@ -19,7 +19,7 @@
 
 (define cleanup-strategy 'purge)    ;keep-logs | purge | none
 (set! test-log-to-file "guile-rocksdb.log")
-(define repeat 10)
+(define repeat 20)
 
 (define (test-not-equal a b)
   (test-assert (not (equal? a b))))
@@ -28,7 +28,8 @@
   (mkdtemp "tmp-XXXXXX"))
 
 (define (alist=? a b)
-  (every (lambda (x) (equal? x (assoc (car x) b))) a))
+  (and (eq? (length a) (length b))
+       (every (lambda (x) (equal? x (assoc (car x) b))) a)))
 
 (define (rm-rf tree)
   (cond
@@ -65,6 +66,7 @@
         (begin (include "test-options.scm"))
         (begin (include "test-iterator.scm"))
         (begin (include "test-readoptions.scm"))
+        (begin (include "test-writeoptions.scm"))
         (gc)))
     (lambda ()
       (test-end)

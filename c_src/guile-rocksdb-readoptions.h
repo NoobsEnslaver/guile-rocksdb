@@ -84,11 +84,11 @@ SCM grocksdb_readoptions_to_alist(SCM scm_readoptions){
                       scm_cons(scm_fill_cache_symbol,
                                scm_from_bool(rocksdb_readoptions_get_fill_cache(opt))),
                       scm_cons(scm_read_tier_symbol,
-                               scm_from_bool(rocksdb_readoptions_get_read_tier(opt))),
+                               scm_from_int(rocksdb_readoptions_get_read_tier(opt))),
                       scm_cons(scm_tailing_symbol,
                                scm_from_bool(rocksdb_readoptions_get_tailing(opt))),
                       scm_cons(scm_readahead_size_symbol,
-                               scm_from_bool(rocksdb_readoptions_get_readahead_size(opt))),
+                               scm_from_int(rocksdb_readoptions_get_readahead_size(opt))),
                       scm_cons(scm_prefix_same_as_start_symbol,
                                scm_from_bool(rocksdb_readoptions_get_prefix_same_as_start(opt))),
                       scm_cons(scm_pin_data_symbol,
@@ -105,7 +105,7 @@ SCM grocksdb_readoptions_to_alist(SCM scm_readoptions){
 }
 
 void grocksdb_readoptions_destroy(SCM scm_readoptions){
-    MXSAFE_DESTROY_WITH(scm_readoptions, rocksdb_readoptions_destroy);
+    SAFE_DESTROY_WITH(scm_readoptions, rocksdb_readoptions_destroy);
 }
 // --------------- Init ----------------------------
 void init_readoptions() {
